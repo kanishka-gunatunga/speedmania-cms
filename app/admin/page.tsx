@@ -99,7 +99,6 @@ export default async function AdminDashboard() {
   );
 }
 
-// Helper to handle class merging since I can't import cn easily in some contexts without verification
 function cn(...inputs: any[]) {
   return inputs.filter(Boolean).join(" ");
 }

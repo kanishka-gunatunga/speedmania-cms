@@ -19,12 +19,12 @@ export const blogs = mysqlTable("blogs", {
 export const drivers = mysqlTable("drivers", {
   id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   fullName: text("full_name").notNull(),
-  dob: varchar("dob", { length: 100 }), // Using string for simple date handling
+  dob: varchar("dob", { length: 100 }),
   otherName: text("other_name"),
   slug: varchar("slug", { length: 191 }).notNull().unique(),
-  
+
   // Motorsport Background
-  racingCategory: varchar("racing_category", { length: 100 }), // Karting, Circuit, etc.
+  racingCategory: varchar("racing_category", { length: 100 }),
   yearsActive: int("years_active"),
   totalRaces: int("total_races"),
   totalWins: int("total_wins"),
@@ -75,6 +75,29 @@ export const riderStats = mysqlTable("rider_stats", {
   position: varchar("position", { length: 50 }),
 });
 
+// CIRCUITS TABLE
+export const circuits = mysqlTable("circuits", {
+  id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  slug: varchar("slug", { length: 191 }).notNull().unique(),
+  trackImage: text("track_image"),
+  circuitLength: varchar("circuit_length", { length: 50 }),
+  firstGrandPrix: int("first_grand_prix"),
+  numberOfLaps: int("number_of_laps"),
+  fastestLapTime: varchar("fastest_lap_time", { length: 50 }),
+  raceDistance: varchar("race_distance", { length: 50 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
+});
+
+// CIRCUIT FAQS TABLE
+export const circuitFaqs = mysqlTable("circuit_faqs", {
+  id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  circuitId: varchar("circuit_id", { length: 191 }).notNull(),
+  question: text("question").notNull(),
+  answer: text("answer").notNull(),
+});
+
 // RELATIONS
 export const driversRelations = relations(drivers, ({ many }) => ({
   achievements: many(achievements),
@@ -95,7 +118,20 @@ export const riderStatsRelations = relations(riderStats, ({ one }) => ({
   }),
 }));
 
+export const circuitsRelations = relations(circuits, ({ many }) => ({
+  faqs: many(circuitFaqs),
+}));
+
+export const circuitFaqsRelations = relations(circuitFaqs, ({ one }) => ({
+  circuit: one(circuits, {
+    fields: [circuitFaqs.circuitId],
+    references: [circuits.id],
+  }),
+}));
+
 export type Blog = typeof blogs.$inferSelect;
 export type Driver = typeof drivers.$inferSelect;
 export type Achievement = typeof achievements.$inferSelect;
 export type RiderStat = typeof riderStats.$inferSelect;
+export type Circuit = typeof circuits.$inferSelect;
+export type CircuitFaq = typeof circuitFaqs.$inferSelect;

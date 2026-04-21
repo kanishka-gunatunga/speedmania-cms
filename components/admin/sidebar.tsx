@@ -9,7 +9,8 @@ import {
   LayoutDashboard, 
   Settings,
   ChevronRight,
-  LogOut
+  LogOut,
+  Globe
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -27,6 +28,11 @@ const NAV_ITEMS = [
     label: "Drivers",
     href: "/admin/drivers",
     icon: Users,
+  },
+  {
+    label: "Circuits",
+    href: "/admin/circuits",
+    icon: Globe,
   },
 ];
 

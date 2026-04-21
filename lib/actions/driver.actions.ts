@@ -111,13 +111,11 @@ export async function updateDriver(id: string, data: {
     const { achievements: achievementsData, riderStats: statsData, ...driverInfo } = data;
 
     await db.transaction(async (tx) => {
-      // Update basic info
       await tx.update(drivers).set({
         ...driverInfo,
         updatedAt: new Date(),
       }).where(eq(drivers.id, id));
 
-      // Sync achievements (Delete and re-insert)
       await tx.delete(achievements).where(eq(achievements.driverId, id));
       if (achievementsData && achievementsData.length > 0) {
         await tx.insert(achievements).values(
@@ -125,7 +123,6 @@ export async function updateDriver(id: string, data: {
         );
       }
 
-      // Sync stats (Delete and re-insert)
       await tx.delete(riderStats).where(eq(riderStats.driverId, id));
       if (statsData && statsData.length > 0) {
         await tx.insert(riderStats).values(

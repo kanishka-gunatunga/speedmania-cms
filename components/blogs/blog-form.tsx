@@ -117,7 +117,6 @@ export function BlogForm({ initialData }: BlogFormProps) {
                   <FormControl>
                     <Input placeholder="E.g., How to win a race" {...field} onChange={(e) => {
                       field.onChange(e);
-                      // Auto-generate slug if it's a new post and slug hasn't been touched much
                       if (!initialData && form.getValues("slug") === "") {
                         form.setValue("slug", e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
                       }
