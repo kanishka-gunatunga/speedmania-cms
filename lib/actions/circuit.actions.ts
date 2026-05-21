@@ -32,11 +32,16 @@ export async function getCircuitById(id: string) {
 export async function createCircuit(data: {
   name: string;
   slug: string;
+  description?: string;
   trackImage?: string;
+  aboutImage?: string;
+  galleryImages?: string;
   circuitLength?: string;
   firstGrandPrix?: number;
   numberOfLaps?: number;
   fastestLapTime?: string;
+  fastestLapDriver?: string;
+  fastestLapYear?: number;
   raceDistance?: string;
   faqs?: { question: string; answer: string }[];
 }) {
@@ -72,11 +77,16 @@ export async function createCircuit(data: {
 export async function updateCircuit(id: string, data: {
   name: string;
   slug: string;
+  description?: string;
   trackImage?: string;
+  aboutImage?: string;
+  galleryImages?: string;
   circuitLength?: string;
   firstGrandPrix?: number;
   numberOfLaps?: number;
   fastestLapTime?: string;
+  fastestLapDriver?: string;
+  fastestLapYear?: number;
   raceDistance?: string;
   faqs?: { question: string; answer: string }[];
 }) {

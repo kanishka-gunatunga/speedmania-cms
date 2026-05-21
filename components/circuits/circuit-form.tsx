@@ -33,11 +33,16 @@ const faqSchema = z.object({
 const formSchema = z.object({
   name: z.string().min(2, "Name is required"),
   slug: z.string().min(1, "Slug is required"),
+  description: z.string().optional(),
   trackImage: z.string().optional(),
+  aboutImage: z.string().optional(),
+  galleryImages: z.string().optional(),
   circuitLength: z.string().optional(),
   firstGrandPrix: z.coerce.number().optional(),
   numberOfLaps: z.coerce.number().optional(),
   fastestLapTime: z.string().optional(),
+  fastestLapDriver: z.string().optional(),
+  fastestLapYear: z.coerce.number().optional(),
   raceDistance: z.string().optional(),
   faqs: z.array(faqSchema).default([]),
 });
@@ -58,11 +63,16 @@ export function CircuitForm({ initialData }: CircuitFormProps) {
     defaultValues: {
       name: initialData?.name ?? "",
       slug: initialData?.slug ?? "",
+      description: initialData?.description ?? "",
       trackImage: initialData?.trackImage ?? "",
+      aboutImage: initialData?.aboutImage ?? "",
+      galleryImages: initialData?.galleryImages ?? "",
       circuitLength: initialData?.circuitLength ?? "",
       firstGrandPrix: initialData?.firstGrandPrix ?? 0,
       numberOfLaps: initialData?.numberOfLaps ?? 0,
       fastestLapTime: initialData?.fastestLapTime ?? "",
+      fastestLapDriver: initialData?.fastestLapDriver ?? "",
+      fastestLapYear: initialData?.fastestLapYear ?? 0,
       raceDistance: initialData?.raceDistance ?? "",
       faqs: (initialData?.faqs || []).map((faq: any) => ({
         question: faq.question ?? "",
@@ -154,9 +164,51 @@ export function CircuitForm({ initialData }: CircuitFormProps) {
                   name="trackImage"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel>Track Layout Image URL</FormLabel>
+                      <FormLabel>Track Layout Image URL (Structure)</FormLabel>
                       <FormControl>
                         <Input placeholder="https://example.com/track.png" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="aboutImage"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>About Section Cover Image URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://example.com/about.jpg" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="galleryImages"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Gallery Image URLs (Comma-separated list)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://example.com/img1.jpg, https://example.com/img2.jpg, ..." {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Provide up to 4 high-resolution image URLs, separated by commas.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>About Track / Description</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Describe the circuit history, characteristic corners, etc." className="min-h-[120px]" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -238,6 +290,32 @@ export function CircuitForm({ initialData }: CircuitFormProps) {
                       <FormLabel>Fastest Lap Time</FormLabel>
                       <FormControl>
                         <Input placeholder="1:30.965" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="fastestLapDriver"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fastest Lap Driver</FormLabel>
+                      <FormControl>
+                        <Input placeholder="E.g. Max Verstappen" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="fastestLapYear"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fastest Lap Year</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="E.g. 2023" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

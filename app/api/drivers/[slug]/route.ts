@@ -1,5 +1,5 @@
 import { db, drivers } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -9,7 +9,10 @@ export async function GET(
   try {
     const resolvedParams = await params;
     const data = await db.query.drivers.findFirst({
-      where: eq(drivers.slug, resolvedParams.slug),
+      where: and(
+        eq(drivers.slug, resolvedParams.slug),
+        eq(drivers.status, "approved")
+      ),
       with: {
         achievements: true,
         riderStats: true,

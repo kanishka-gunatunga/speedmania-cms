@@ -1,12 +1,16 @@
 import { db, blogs } from "@/lib/db";
 import { eq, desc } from "drizzle-orm";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const data = await db
+    const { searchParams } = new URL(request.url);
+    const limitParam = searchParams.get("limit");
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined;
+
+    const baseQuery = db
       .select({
         id: blogs.id,
         title: blogs.title,
@@ -20,6 +24,8 @@ export async function GET() {
       .from(blogs)
       .where(eq(blogs.published, true))
       .orderBy(desc(blogs.createdAt));
+
+    const data = await (limit !== undefined && !isNaN(limit) ? baseQuery.limit(limit) : baseQuery);
 
     return NextResponse.json(data);
   } catch (error) {
