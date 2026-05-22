@@ -26,33 +26,33 @@ import { BlogEditor } from "@/components/blogs/blog-editor";
 
 const achievementSchema = z.object({
   raceName: z.string().min(1, "Race name is required"),
-  year: z.coerce.number().optional(),
+  year: z.coerce.number().min(0, "Year cannot be negative").optional(),
   date: z.string().optional(),
   team: z.string().optional(),
   position: z.string().optional(),
-  points: z.coerce.number().optional(),
+  points: z.coerce.number().min(0, "Points cannot be negative").optional(),
   category: z.string().optional(),
 });
 
 const statsSchema = z.object({
-  season: z.coerce.number().optional(),
+  season: z.coerce.number().min(0, "Season cannot be negative").optional(),
   category: z.string().optional(),
   bike: z.string().optional(),
-  starts: z.coerce.number().optional(),
-  poles: z.coerce.number().optional(),
-  firstPos: z.coerce.number().optional(),
-  secondPos: z.coerce.number().optional(),
-  thirdPos: z.coerce.number().optional(),
-  podiums: z.coerce.number().optional(),
-  points: z.coerce.number().optional(),
+  starts: z.coerce.number().min(0, "Starts cannot be negative").optional(),
+  poles: z.coerce.number().min(0, "Poles cannot be negative").optional(),
+  firstPos: z.coerce.number().min(0, "Wins cannot be negative").optional(),
+  secondPos: z.coerce.number().min(0, "Second places cannot be negative").optional(),
+  thirdPos: z.coerce.number().min(0, "Third places cannot be negative").optional(),
+  podiums: z.coerce.number().min(0, "Podiums cannot be negative").optional(),
+  points: z.coerce.number().min(0, "Points cannot be negative").optional(),
   position: z.string().optional(),
-  fastestLaps: z.coerce.number().optional(),
-  dnfs: z.coerce.number().optional(),
-  sprintRaces: z.coerce.number().optional(),
-  sprintPoints: z.coerce.number().optional(),
-  sprintWins: z.coerce.number().optional(),
-  sprintPodiums: z.coerce.number().optional(),
-  sprintPoles: z.coerce.number().optional(),
+  fastestLaps: z.coerce.number().min(0, "Fastest laps cannot be negative").optional(),
+  dnfs: z.coerce.number().min(0, "DNFs cannot be negative").optional(),
+  sprintRaces: z.coerce.number().min(0, "Sprint races cannot be negative").optional(),
+  sprintPoints: z.coerce.number().min(0, "Sprint points cannot be negative").optional(),
+  sprintWins: z.coerce.number().min(0, "Sprint wins cannot be negative").optional(),
+  sprintPodiums: z.coerce.number().min(0, "Sprint podiums cannot be negative").optional(),
+  sprintPoles: z.coerce.number().min(0, "Sprint poles cannot be negative").optional(),
 });
 
 const formSchema = z.object({
@@ -63,10 +63,10 @@ const formSchema = z.object({
   otherName: z.string().optional(),
   slug: z.string().min(1, "Slug is required"),
   racingCategory: z.string().optional(),
-  yearsActive: z.coerce.number().optional(),
-  totalRaces: z.coerce.number().optional(),
-  totalWins: z.coerce.number().optional(),
-  totalPodiums: z.coerce.number().optional(),
+  yearsActive: z.coerce.number().min(0, "Years active cannot be negative").optional(),
+  totalRaces: z.coerce.number().min(0, "Total races cannot be negative").optional(),
+  totalWins: z.coerce.number().min(0, "Total wins cannot be negative").optional(),
+  totalPodiums: z.coerce.number().min(0, "Total podiums cannot be negative").optional(),
   bestCareerFinish: z.string().optional(),
   championshipsWon: z.string().optional(),
   currentTeam: z.string().optional(),
@@ -90,8 +90,8 @@ const formSchema = z.object({
   achievements: z.array(achievementSchema).default([]),
   riderStats: z.array(statsSchema).default([]),
   playerType: z.string().default("driver"),
-  careerPoints: z.string().optional(),
-  careerPoles: z.coerce.number().optional(),
+  careerPoints: z.string().refine(val => !val || parseFloat(val) >= 0, "Career points cannot be negative").optional(),
+  careerPoles: z.coerce.number().min(0, "Career poles cannot be negative").optional(),
   biography: z.string().optional(),
 });
 
@@ -418,9 +418,17 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                     <FormItem>
                       <FormLabel>Team Primary Color (Hex)</FormLabel>
                       <FormControl>
-                        <div className="flex gap-2">
-                           <Input placeholder="#E8002D" {...field} className="flex-grow" />
-                           <div className="w-10 h-10 rounded border" style={{ backgroundColor: field.value }} />
+                        <div className="flex gap-2 items-center">
+                           <Input placeholder="#E8002D" {...field} className="flex-grow font-mono" />
+                           <div className="relative w-10 h-10 rounded-md border border-input shadow-sm overflow-hidden flex items-center justify-center bg-muted hover:bg-accent transition-colors">
+                             <input 
+                               type="color" 
+                               value={field.value && /^#[0-9A-Fa-f]{6}$/.test(field.value) ? field.value : "#000000"} 
+                               onChange={(e) => field.onChange(e.target.value)}
+                               className="absolute inset-0 w-full h-full cursor-pointer opacity-0" 
+                             />
+                             <div className="w-6 h-6 rounded-full border border-black/10 shadow-sm" style={{ backgroundColor: field.value || "#000000" }} />
+                           </div>
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -434,9 +442,17 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                     <FormItem>
                       <FormLabel>Team Dark Color (Accessible)</FormLabel>
                       <FormControl>
-                        <div className="flex gap-2">
-                           <Input placeholder="#5C0012" {...field} className="flex-grow" />
-                           <div className="w-10 h-10 rounded border" style={{ backgroundColor: field.value }} />
+                        <div className="flex gap-2 items-center">
+                           <Input placeholder="#5C0012" {...field} className="flex-grow font-mono" />
+                           <div className="relative w-10 h-10 rounded-md border border-input shadow-sm overflow-hidden flex items-center justify-center bg-muted hover:bg-accent transition-colors">
+                             <input 
+                               type="color" 
+                               value={field.value && /^#[0-9A-Fa-f]{6}$/.test(field.value) ? field.value : "#000000"} 
+                               onChange={(e) => field.onChange(e.target.value)}
+                               className="absolute inset-0 w-full h-full cursor-pointer opacity-0" 
+                             />
+                             <div className="w-6 h-6 rounded-full border border-black/10 shadow-sm" style={{ backgroundColor: field.value || "#000000" }} />
+                           </div>
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -538,7 +554,7 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                     <FormItem>
                       <FormLabel>Years Active</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" min={0} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -551,7 +567,7 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                     <FormItem>
                       <FormLabel>{isSriLankan ? "Race Entered" : "Grand Prix Entered"}</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" min={0} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -565,7 +581,7 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                       <FormItem>
                         <FormLabel>Race Wins</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} />
+                          <Input type="number" min={0} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -579,7 +595,7 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                       <FormItem>
                         <FormLabel>Career Points</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="E.g. 5069.5" />
+                          <Input type="number" step="any" min={0} {...field} placeholder="E.g. 5069.5" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -606,7 +622,7 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                     <FormItem>
                       <FormLabel>Podiums</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" min={0} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -619,7 +635,7 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                     <FormItem>
                       <FormLabel>Pole Positions</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" min={0} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -800,7 +816,7 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                         <FormItem>
                           <FormLabel className="text-xs uppercase text-muted-foreground">Year</FormLabel>
                           <FormControl>
-                            <Input type="number" {...field} />
+                            <Input type="number" min={0} {...field} />
                           </FormControl>
                         </FormItem>
                       )}
@@ -860,7 +876,7 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                         <FormItem>
                           <FormLabel className="text-xs uppercase text-muted-foreground">Points (Optional)</FormLabel>
                           <FormControl>
-                            <Input type="number" {...field} />
+                            <Input type="number" min={0} {...field} />
                           </FormControl>
                         </FormItem>
                       )}
@@ -924,7 +940,7 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                 <Card key={field.id} className="relative group overflow-hidden">
                   <CardContent className="pt-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-9 gap-4 pr-12">
                     <FormField control={form.control} name={`riderStats.${index}.season`} render={({field}) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">Season</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[10px] uppercase">Season</FormLabel><FormControl><Input type="number" min={0} className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name={`riderStats.${index}.category`} render={({field}) => (
                       <FormItem><FormLabel className="text-[10px] uppercase">Category</FormLabel><FormControl><Input className="h-8 text-xs" {...field} /></FormControl></FormItem>
@@ -933,49 +949,49 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                       <FormItem><FormLabel className="text-[10px] uppercase">Vehicle</FormLabel><FormControl><Input className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name={`riderStats.${index}.starts`} render={({field}) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">Starts</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[10px] uppercase">Starts</FormLabel><FormControl><Input type="number" min={0} className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name={`riderStats.${index}.poles`} render={({field}) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">Poles</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[10px] uppercase">Poles</FormLabel><FormControl><Input type="number" min={0} className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name={`riderStats.${index}.firstPos`} render={({field}) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">1st</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[10px] uppercase">1st</FormLabel><FormControl><Input type="number" min={0} className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name={`riderStats.${index}.secondPos`} render={({field}) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">2nd</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[10px] uppercase">2nd</FormLabel><FormControl><Input type="number" min={0} className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name={`riderStats.${index}.thirdPos`} render={({field}) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">3rd</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[10px] uppercase">3rd</FormLabel><FormControl><Input type="number" min={0} className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name={`riderStats.${index}.podiums`} render={({field}) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">Podiums</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[10px] uppercase">Podiums</FormLabel><FormControl><Input type="number" min={0} className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name={`riderStats.${index}.points`} render={({field}) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">Points</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[10px] uppercase">Points</FormLabel><FormControl><Input type="number" min={0} className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name={`riderStats.${index}.position`} render={({field}) => (
                       <FormItem><FormLabel className="text-[10px] uppercase">Pos</FormLabel><FormControl><Input className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name={`riderStats.${index}.fastestLaps`} render={({field}) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">Fastest Laps</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[10px] uppercase">Fastest Laps</FormLabel><FormControl><Input type="number" min={0} className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name={`riderStats.${index}.dnfs`} render={({field}) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">DNFs</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[10px] uppercase">DNFs</FormLabel><FormControl><Input type="number" min={0} className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name={`riderStats.${index}.sprintRaces`} render={({field}) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">Sprint Races</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[10px] uppercase">Sprint Races</FormLabel><FormControl><Input type="number" min={0} className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name={`riderStats.${index}.sprintPoints`} render={({field}) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">Sprint Pts</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[10px] uppercase">Sprint Pts</FormLabel><FormControl><Input type="number" min={0} className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name={`riderStats.${index}.sprintWins`} render={({field}) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">Sprint Wins</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[10px] uppercase">Sprint Wins</FormLabel><FormControl><Input type="number" min={0} className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name={`riderStats.${index}.sprintPodiums`} render={({field}) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">Sprint Podiums</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[10px] uppercase">Sprint Podiums</FormLabel><FormControl><Input type="number" min={0} className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name={`riderStats.${index}.sprintPoles`} render={({field}) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">Sprint Poles</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[10px] uppercase">Sprint Poles</FormLabel><FormControl><Input type="number" min={0} className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
                     
                     <Button
