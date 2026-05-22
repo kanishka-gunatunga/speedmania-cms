@@ -1,7 +1,7 @@
-import { getDrivers, deleteDriver } from "@/lib/actions/driver.actions";
+import { getDrivers, deleteDriver, approveDriver, rejectDriver } from "@/lib/actions/driver.actions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, User } from "lucide-react";
+import { Plus, Edit, Trash2, User, Check, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -47,7 +47,7 @@ export default async function DriversPage() {
                   <TableHead className="w-[300px]">Name</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Current Team</TableHead>
-                  <TableHead>Vehicle</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -74,9 +74,33 @@ export default async function DriversPage() {
                       </TableCell>
                       <TableCell>{driver.racingCategory || "N/A"}</TableCell>
                       <TableCell>{driver.currentTeam || "Independent"}</TableCell>
-                      <TableCell>{driver.vehicleModel || "N/A"}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium uppercase tracking-wider ${driver.status === 'approved' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : driver.status === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'}`}>
+                          {driver.status || "pending"}
+                        </span>
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          {(driver.status === "pending" || !driver.status) && (
+                            <>
+                              <form action={async () => {
+                                "use server";
+                                await approveDriver(driver.id);
+                              }}>
+                                <Button type="submit" variant="outline" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20" title="Approve">
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                              </form>
+                              <form action={async () => {
+                                "use server";
+                                await rejectDriver(driver.id);
+                              }}>
+                                <Button type="submit" variant="outline" size="icon" className="h-8 w-8 text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/20" title="Reject">
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </form>
+                            </>
+                          )}
                           <Link href={`/admin/drivers/${driver.id}`}>
                             <Button variant="outline" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20">
                               <Edit className="h-4 w-4" />

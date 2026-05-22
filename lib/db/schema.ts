@@ -19,6 +19,8 @@ export const blogs = mysqlTable("blogs", {
 export const drivers = mysqlTable("drivers", {
   id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   fullName: text("full_name").notNull(),
+  firstName: varchar("first_name", { length: 100 }),
+  lastName: varchar("last_name", { length: 100 }),
   dob: varchar("dob", { length: 100 }),
   otherName: text("other_name"),
   slug: varchar("slug", { length: 191 }).notNull().unique(),
@@ -37,12 +39,22 @@ export const drivers = mysqlTable("drivers", {
   previousTeams: text("previous_teams"),
   sponsorDetails: text("sponsor_details"),
   
+  // F1 Specific
+  teamColor: varchar("team_color", { length: 20 }),
+  accessibleColor: varchar("accessible_color", { length: 20 }),
+  number: varchar("number", { length: 10 }),
+  image: text("image"),
+  numberImage: text("number_image"),
+  flagCode: varchar("flag_code", { length: 10 }),
+  country: varchar("country", { length: 100 }),
+
   // Vehicle Information
   vehicleModel: text("vehicle_model"),
   engineCapacity: varchar("engine_capacity", { length: 50 }),
   vehicleClass: varchar("vehicle_class", { length: 100 }),
   chassisNumber: varchar("chassis_number", { length: 100 }),
   liveryScheme: text("livery_scheme"),
+  status: varchar("status", { length: 20 }).default("pending"),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
@@ -54,7 +66,10 @@ export const achievements = mysqlTable("achievements", {
   driverId: varchar("driver_id", { length: 191 }).notNull(),
   raceName: text("race_name").notNull(),
   year: int("year"),
+  date: varchar("date", { length: 100 }),
+  team: varchar("team", { length: 100 }),
   position: varchar("position", { length: 50 }),
+  points: int("points"),
   category: varchar("category", { length: 100 }),
 });
 
@@ -73,6 +88,15 @@ export const riderStats = mysqlTable("rider_stats", {
   podiums: int("podiums"),
   points: int("points"),
   position: varchar("position", { length: 50 }),
+  
+  // Extra F1 Stats
+  fastestLaps: int("fastest_laps"),
+  dnfs: int("dnfs"),
+  sprintRaces: int("sprint_races"),
+  sprintPoints: int("sprint_points"),
+  sprintWins: int("sprint_wins"),
+  sprintPodiums: int("sprint_podiums"),
+  sprintPoles: int("sprint_poles"),
 });
 
 // CIRCUITS TABLE
@@ -80,11 +104,16 @@ export const circuits = mysqlTable("circuits", {
   id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
   slug: varchar("slug", { length: 191 }).notNull().unique(),
+  description: longtext("description"),
   trackImage: text("track_image"),
+  aboutImage: text("about_image"),
+  galleryImages: text("gallery_images"),
   circuitLength: varchar("circuit_length", { length: 50 }),
   firstGrandPrix: int("first_grand_prix"),
   numberOfLaps: int("number_of_laps"),
   fastestLapTime: varchar("fastest_lap_time", { length: 50 }),
+  fastestLapDriver: varchar("fastest_lap_driver", { length: 191 }),
+  fastestLapYear: int("fastest_lap_year"),
   raceDistance: varchar("race_distance", { length: 50 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),

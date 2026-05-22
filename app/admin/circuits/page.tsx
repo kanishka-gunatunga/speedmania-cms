@@ -75,7 +75,18 @@ export default async function CircuitsPage() {
                       <TableCell className="font-medium text-muted-foreground">{circuit.circuitLength || "N/A"}</TableCell>
                       <TableCell>{circuit.numberOfLaps || "0"}</TableCell>
                       <TableCell className="text-xs">
-                        <div className="font-bold">{circuit.fastestLapTime || "-"}</div>
+                        {circuit.fastestLapTime ? (
+                          <>
+                            <div className="font-bold">{circuit.fastestLapTime}</div>
+                            {circuit.fastestLapDriver && (
+                              <div className="text-muted-foreground font-normal">
+                                {circuit.fastestLapDriver} ({circuit.fastestLapYear || "-"})
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          "-"
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">

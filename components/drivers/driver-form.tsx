@@ -26,7 +26,10 @@ import { createDriver, updateDriver } from "@/lib/actions/driver.actions";
 const achievementSchema = z.object({
   raceName: z.string().min(1, "Race name is required"),
   year: z.coerce.number().optional(),
+  date: z.string().optional(),
+  team: z.string().optional(),
   position: z.string().optional(),
+  points: z.coerce.number().optional(),
   category: z.string().optional(),
 });
 
@@ -42,10 +45,19 @@ const statsSchema = z.object({
   podiums: z.coerce.number().optional(),
   points: z.coerce.number().optional(),
   position: z.string().optional(),
+  fastestLaps: z.coerce.number().optional(),
+  dnfs: z.coerce.number().optional(),
+  sprintRaces: z.coerce.number().optional(),
+  sprintPoints: z.coerce.number().optional(),
+  sprintWins: z.coerce.number().optional(),
+  sprintPodiums: z.coerce.number().optional(),
+  sprintPoles: z.coerce.number().optional(),
 });
 
 const formSchema = z.object({
-  fullName: z.string().min(2, "Name is required"),
+  fullName: z.string().min(1, "Full name is required"),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
   dob: z.string().optional(),
   otherName: z.string().optional(),
   slug: z.string().min(1, "Slug is required"),
@@ -59,6 +71,16 @@ const formSchema = z.object({
   currentTeam: z.string().optional(),
   previousTeams: z.string().optional(),
   sponsorDetails: z.string().optional(),
+  
+  // F1 Specific
+  teamColor: z.string().optional(),
+  accessibleColor: z.string().optional(),
+  number: z.string().optional(),
+  image: z.string().url("Must be a valid URL").or(z.literal("")).optional(),
+  numberImage: z.string().url("Must be a valid URL").or(z.literal("")).optional(),
+  flagCode: z.string().optional(),
+  country: z.string().optional(),
+
   vehicleModel: z.string().optional(),
   engineCapacity: z.string().optional(),
   vehicleClass: z.string().optional(),
@@ -70,6 +92,8 @@ const formSchema = z.object({
 
 interface DriverFormValues {
   fullName: string;
+  firstName?: string;
+  lastName?: string;
   slug: string;
   dob?: string;
   otherName?: string;
@@ -83,6 +107,13 @@ interface DriverFormValues {
   currentTeam?: string;
   previousTeams?: string;
   sponsorDetails?: string;
+  teamColor?: string;
+  accessibleColor?: string;
+  number?: string;
+  image?: string;
+  numberImage?: string;
+  flagCode?: string;
+  country?: string;
   vehicleModel?: string;
   engineCapacity?: string;
   vehicleClass?: string;
@@ -91,7 +122,10 @@ interface DriverFormValues {
   achievements: {
     raceName: string;
     year?: number;
+    date?: string;
+    team?: string;
     position?: string;
+    points?: number;
     category?: string;
   }[];
   riderStats: {
@@ -106,14 +140,22 @@ interface DriverFormValues {
     podiums?: number;
     points?: number;
     position?: string;
+    fastestLaps?: number;
+    dnfs?: number;
+    sprintRaces?: number;
+    sprintPoints?: number;
+    sprintWins?: number;
+    sprintPodiums?: number;
+    sprintPoles?: number;
   }[];
 }
 
 interface DriverFormProps {
   initialData?: any;
+  isPublic?: boolean;
 }
 
-export function DriverForm({ initialData }: DriverFormProps) {
+export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -122,6 +164,8 @@ export function DriverForm({ initialData }: DriverFormProps) {
     resolver: zodResolver(formSchema) as any,
     defaultValues: {
       fullName: initialData?.fullName || "",
+      firstName: initialData?.firstName || "",
+      lastName: initialData?.lastName || "",
       dob: initialData?.dob || "",
       otherName: initialData?.otherName || "",
       slug: initialData?.slug || "",
@@ -135,6 +179,13 @@ export function DriverForm({ initialData }: DriverFormProps) {
       currentTeam: initialData?.currentTeam || "",
       previousTeams: initialData?.previousTeams || "",
       sponsorDetails: initialData?.sponsorDetails || "",
+      teamColor: initialData?.teamColor || "",
+      accessibleColor: initialData?.accessibleColor || "",
+      number: initialData?.number || "",
+      image: initialData?.image || "",
+      numberImage: initialData?.numberImage || "",
+      flagCode: initialData?.flagCode || "",
+      country: initialData?.country || "",
       vehicleModel: initialData?.vehicleModel || "",
       engineCapacity: initialData?.engineCapacity || "",
       vehicleClass: initialData?.vehicleClass || "",
@@ -156,6 +207,7 @@ export function DriverForm({ initialData }: DriverFormProps) {
   });
 
   function onSubmit(data: DriverFormValues) {
+    console.log("Form submitted with data:", data);
     setError(null);
     startTransition(async () => {
       try {
@@ -167,7 +219,11 @@ export function DriverForm({ initialData }: DriverFormProps) {
         }
 
         if (result.success) {
-          router.push("/admin/drivers");
+          if (isPublic) {
+            router.push("/submit-profile/success");
+          } else {
+            router.push("/admin/drivers");
+          }
           router.refresh();
         } else {
           setError(result.error || "Something went wrong");
@@ -176,6 +232,11 @@ export function DriverForm({ initialData }: DriverFormProps) {
         setError(err.message || "An unexpected error occurred");
       }
     });
+  }
+
+  // Debug: Log form errors
+  if (Object.keys(form.formState.errors).length > 0) {
+    console.log("Form validation errors:", form.formState.errors);
   }
 
   return (
@@ -188,14 +249,14 @@ export function DriverForm({ initialData }: DriverFormProps) {
         )}
 
         <Tabs defaultValue="personal" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-8 h-auto gap-2 bg-transparent p-0">
-            {["personal", "motorsport", "team", "vehicle", "achievements", "stats"].map((tab) => (
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7 mb-8 h-auto gap-2 bg-transparent p-0">
+            {["personal", "f1-branding", "motorsport", "team", "vehicle", "achievements", "stats"].map((tab) => (
               <TabsTrigger
                 key={tab}
                 value={tab}
                 className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-border py-2 px-4 capitalize"
               >
-                {tab}
+                {tab === "f1-branding" ? "F1 Branding" : tab}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -208,15 +269,47 @@ export function DriverForm({ initialData }: DriverFormProps) {
                   control={form.control}
                   name="fullName"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Full Name (Display)</FormLabel>
                       <FormControl>
                         <Input placeholder="E.g. Lewis Hamilton" {...field} onChange={(e) => {
                           field.onChange(e);
                           if (!initialData && form.getValues("slug") === "") {
                             form.setValue("slug", e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
                           }
+                          // Auto-split name if possible
+                          const parts = e.target.value.trim().split(/\s+/);
+                          if (parts.length >= 2) {
+                            form.setValue("firstName", parts[0]);
+                            form.setValue("lastName", parts.slice(1).join(" "));
+                          }
                         }}/>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>First Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Lewis" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Hamilton" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -252,11 +345,118 @@ export function DriverForm({ initialData }: DriverFormProps) {
                   control={form.control}
                   name="otherName"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Other Name / Alias</FormLabel>
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Quote / Alias (Display on Profile)</FormLabel>
                       <FormControl>
-                        <Input placeholder="E.g. Billion Dollar Man" {...field} />
+                        <Input placeholder="E.g. If in doubt, go flat out" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* F1 BRANDING */}
+          <TabsContent value="f1-branding" className="space-y-6">
+            <Card>
+              <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="teamColor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Team Primary Color (Hex)</FormLabel>
+                      <FormControl>
+                        <div className="flex gap-2">
+                           <Input placeholder="#E8002D" {...field} className="flex-grow" />
+                           <div className="w-10 h-10 rounded border" style={{ backgroundColor: field.value }} />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="accessibleColor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Team Dark Color (Accessible)</FormLabel>
+                      <FormControl>
+                        <div className="flex gap-2">
+                           <Input placeholder="#5C0012" {...field} className="flex-grow" />
+                           <div className="w-10 h-10 rounded border" style={{ backgroundColor: field.value }} />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Driver Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="44" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="flagCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country Flag Code (ISO 2-letter)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="GB / IT / MC" {...field} />
+                      </FormControl>
+                      <FormDescription>Used for flag icons (e.g. GB for Great Britain)</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Great Britain" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Driver Portrait URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://media.formula1.com/..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="numberImage"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Driver Number Mask URL (Transparent SVG/PNG)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://media.formula1.com/..." {...field} />
+                      </FormControl>
+                      <FormDescription>Used for the large background number branding</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -493,7 +693,7 @@ export function DriverForm({ initialData }: DriverFormProps) {
                 variant="outline"
                 size="sm"
                 className="gap-2"
-                onClick={() => appendAchievement({ raceName: "", year: new Date().getFullYear(), position: "", category: "" })}
+                onClick={() => appendAchievement({ raceName: "", year: new Date().getFullYear(), position: "", category: "Formula 1", date: "", team: "", points: 0 })}
               >
                 <Plus className="w-4 h-4" />
                 Add Row
@@ -551,6 +751,42 @@ export function DriverForm({ initialData }: DriverFormProps) {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={form.control}
+                      name={`achievements.${index}.date`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs uppercase text-muted-foreground">Date (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="08 Mar" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`achievements.${index}.team`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs uppercase text-muted-foreground">Team (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Mercedes" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`achievements.${index}.points`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs uppercase text-muted-foreground">Points (Optional)</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
                     <Button
                       type="button"
                       variant="ghost"
@@ -582,8 +818,8 @@ export function DriverForm({ initialData }: DriverFormProps) {
                 className="gap-2"
                 onClick={() => appendStat({
                   season: new Date().getFullYear(),
-                  category: "",
-                  bike: "",
+                  category: "Formula 1",
+                  bike: "Mercedes W17",
                   starts: 0,
                   poles: 0,
                   firstPos: 0,
@@ -591,7 +827,14 @@ export function DriverForm({ initialData }: DriverFormProps) {
                   thirdPos: 0,
                   podiums: 0,
                   points: 0,
-                  position: "-"
+                  position: "-",
+                  fastestLaps: 0,
+                  dnfs: 0,
+                  sprintRaces: 0,
+                  sprintPoints: 0,
+                  sprintWins: 0,
+                  sprintPodiums: 0,
+                  sprintPoles: 0
                 })}
               >
                 <Plus className="w-4 h-4" />
@@ -601,7 +844,7 @@ export function DriverForm({ initialData }: DriverFormProps) {
             <div className="space-y-4">
               {statsFields.map((field, index) => (
                 <Card key={field.id} className="relative group overflow-hidden">
-                  <CardContent className="pt-6 grid grid-cols-2 md:grid-cols-6 lg:grid-cols-11 gap-4 pr-12">
+                  <CardContent className="pt-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-9 gap-4 pr-12">
                     <FormField control={form.control} name={`riderStats.${index}.season`} render={({field}) => (
                       <FormItem><FormLabel className="text-[10px] uppercase">Season</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
@@ -635,6 +878,27 @@ export function DriverForm({ initialData }: DriverFormProps) {
                     <FormField control={form.control} name={`riderStats.${index}.position`} render={({field}) => (
                       <FormItem><FormLabel className="text-[10px] uppercase">Pos</FormLabel><FormControl><Input className="h-8 text-xs" {...field} /></FormControl></FormItem>
                     )} />
+                    <FormField control={form.control} name={`riderStats.${index}.fastestLaps`} render={({field}) => (
+                      <FormItem><FormLabel className="text-[10px] uppercase">Fastest Laps</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                    )} />
+                    <FormField control={form.control} name={`riderStats.${index}.dnfs`} render={({field}) => (
+                      <FormItem><FormLabel className="text-[10px] uppercase">DNFs</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                    )} />
+                    <FormField control={form.control} name={`riderStats.${index}.sprintRaces`} render={({field}) => (
+                      <FormItem><FormLabel className="text-[10px] uppercase">Sprint Races</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                    )} />
+                    <FormField control={form.control} name={`riderStats.${index}.sprintPoints`} render={({field}) => (
+                      <FormItem><FormLabel className="text-[10px] uppercase">Sprint Pts</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                    )} />
+                    <FormField control={form.control} name={`riderStats.${index}.sprintWins`} render={({field}) => (
+                      <FormItem><FormLabel className="text-[10px] uppercase">Sprint Wins</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                    )} />
+                    <FormField control={form.control} name={`riderStats.${index}.sprintPodiums`} render={({field}) => (
+                      <FormItem><FormLabel className="text-[10px] uppercase">Sprint Podiums</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                    )} />
+                    <FormField control={form.control} name={`riderStats.${index}.sprintPoles`} render={({field}) => (
+                      <FormItem><FormLabel className="text-[10px] uppercase">Sprint Poles</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>
+                    )} />
                     
                     <Button
                       type="button"
@@ -658,16 +922,18 @@ export function DriverForm({ initialData }: DriverFormProps) {
         </Tabs>
 
         <div className="flex justify-end gap-4 pt-8 border-t">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push("/admin/drivers")}
-            disabled={isPending}
-          >
-            Cancel
-          </Button>
+          {!isPublic && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/admin/drivers")}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+          )}
           <Button type="submit" disabled={isPending} className="px-8">
-            {isPending ? "Saving..." : (initialData ? "Update Profile" : "Create Profile")}
+            {isPending ? "Saving..." : isPublic ? "Submit Profile for Review" : (initialData ? "Update Profile" : "Create Profile")}
           </Button>
         </div>
       </form>
