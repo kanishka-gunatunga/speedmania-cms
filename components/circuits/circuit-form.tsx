@@ -208,7 +208,7 @@ export function CircuitForm({ initialData }: CircuitFormProps) {
                     <FormItem className="md:col-span-2">
                       <FormLabel>About Track / Description</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="Describe the circuit history, characteristic corners, etc." className="min-h-[120px]" {...field} />
+                        <BlogEditor value={field.value || ""} onChange={field.onChange} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
