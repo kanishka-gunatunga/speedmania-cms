@@ -55,6 +55,7 @@ export const drivers = mysqlTable("drivers", {
   chassisNumber: varchar("chassis_number", { length: 100 }),
   liveryScheme: text("livery_scheme"),
   status: varchar("status", { length: 20 }).default("pending"),
+  playerType: varchar("player_type", { length: 20 }).default("driver"),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
