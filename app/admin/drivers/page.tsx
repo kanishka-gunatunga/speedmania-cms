@@ -45,6 +45,7 @@ export default async function DriversPage() {
               <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead className="w-[300px]">Name</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Current Team</TableHead>
                   <TableHead>Status</TableHead>
@@ -54,7 +55,7 @@ export default async function DriversPage() {
               <TableBody>
                 {drivers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                       No profiles found.
                     </TableCell>
                   </TableRow>
@@ -71,6 +72,11 @@ export default async function DriversPage() {
                             <div className="text-xs text-muted-foreground font-normal">{driver.slug}</div>
                           </div>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${driver.playerType === 'rider' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
+                          {driver.playerType || "driver"}
+                        </span>
                       </TableCell>
                       <TableCell>{driver.racingCategory || "N/A"}</TableCell>
                       <TableCell>{driver.currentTeam || "Independent"}</TableCell>

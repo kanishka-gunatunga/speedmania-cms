@@ -88,6 +88,7 @@ const formSchema = z.object({
   liveryScheme: z.string().optional(),
   achievements: z.array(achievementSchema).default([]),
   riderStats: z.array(statsSchema).default([]),
+  playerType: z.string().default("driver"),
 });
 
 interface DriverFormValues {
@@ -97,6 +98,7 @@ interface DriverFormValues {
   slug: string;
   dob?: string;
   otherName?: string;
+  playerType?: string;
   racingCategory?: string;
   yearsActive?: number;
   totalRaces?: number;
@@ -193,6 +195,7 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
       liveryScheme: initialData?.liveryScheme || "",
       achievements: initialData?.achievements || [],
       riderStats: initialData?.riderStats || [],
+      playerType: initialData?.playerType || "driver",
     },
   });
 
@@ -336,6 +339,25 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                       <FormLabel>Date of Birth</FormLabel>
                       <FormControl>
                         <Input placeholder="DD/MM/YYYY" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="playerType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Athlete Type</FormLabel>
+                      <FormControl>
+                        <select
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          {...field}
+                        >
+                          <option value="driver">Driver (Formula 1)</option>
+                          <option value="rider">Rider (Motorcycle)</option>
+                        </select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

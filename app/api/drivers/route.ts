@@ -4,8 +4,16 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get("type");
+
+    const whereConditions = [eq(drivers.status, "approved")];
+    if (type === "driver" || type === "rider") {
+      whereConditions.push(eq(drivers.playerType, type));
+    }
+
     const data = await db
       .select({
         id: drivers.id,
@@ -13,6 +21,7 @@ export async function GET() {
         firstName: drivers.firstName,
         lastName: drivers.lastName,
         slug: drivers.slug,
+        playerType: drivers.playerType,
         racingCategory: drivers.racingCategory,
         currentTeam: drivers.currentTeam,
         teamColor: drivers.teamColor,
@@ -40,7 +49,7 @@ export async function GET() {
           eq(riderStats.season, 2026)
         )
       )
-      .where(eq(drivers.status, "approved"))
+      .where(and(...whereConditions))
       .orderBy(desc(riderStats.points));
 
     return NextResponse.json(data);
