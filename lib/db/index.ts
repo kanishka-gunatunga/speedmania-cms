@@ -15,6 +15,6 @@ const conn = globalForDb.conn ?? (
 
 if (process.env.NODE_ENV !== "production") globalForDb.conn = conn;
 
-export const db = drizzle(conn, { schema, mode: "default" });
+export const db = drizzle(conn, { schema, mode: "planetscale" });
 export { schema };
 export * from "./schema";
