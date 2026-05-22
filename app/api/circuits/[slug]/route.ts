@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { circuits } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 
 export async function GET(
   request: Request,
@@ -16,7 +16,10 @@ export async function GET(
     }
 
     const circuit = await db.query.circuits.findFirst({
-      where: eq(circuits.slug, slug),
+      where: or(
+        eq(circuits.slug, slug),
+        eq(circuits.id, slug)
+      ),
       with: {
         faqs: true,
       },

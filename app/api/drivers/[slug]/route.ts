@@ -1,5 +1,5 @@
 import { db, drivers } from "@/lib/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -10,7 +10,10 @@ export async function GET(
     const resolvedParams = await params;
     const data = await db.query.drivers.findFirst({
       where: and(
-        eq(drivers.slug, resolvedParams.slug),
+        or(
+          eq(drivers.slug, resolvedParams.slug),
+          eq(drivers.id, resolvedParams.slug)
+        ),
         eq(drivers.status, "approved")
       ),
       with: {
