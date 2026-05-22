@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { createDriver, updateDriver } from "@/lib/actions/driver.actions";
+import { BlogEditor } from "@/components/blogs/blog-editor";
 
 const achievementSchema = z.object({
   raceName: z.string().min(1, "Race name is required"),
@@ -89,6 +90,9 @@ const formSchema = z.object({
   achievements: z.array(achievementSchema).default([]),
   riderStats: z.array(statsSchema).default([]),
   playerType: z.string().default("driver"),
+  careerPoints: z.string().optional(),
+  careerPoles: z.coerce.number().optional(),
+  biography: z.string().optional(),
 });
 
 interface DriverFormValues {
@@ -121,6 +125,9 @@ interface DriverFormValues {
   vehicleClass?: string;
   chassisNumber?: string;
   liveryScheme?: string;
+  careerPoints?: string;
+  careerPoles?: number;
+  biography?: string;
   achievements: {
     raceName: string;
     year?: number;
@@ -196,8 +203,15 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
       achievements: initialData?.achievements || [],
       riderStats: initialData?.riderStats || [],
       playerType: initialData?.playerType || "driver",
+      careerPoints: initialData?.careerPoints || "",
+      careerPoles: initialData?.careerPoles || 0,
+      biography: initialData?.biography || "",
     },
   });
+
+  const countryValue = form.watch("country") || "";
+  const flagCodeValue = form.watch("flagCode") || "";
+  const isSriLankan = countryValue.toLowerCase().trim() === "sri lanka" || countryValue.toLowerCase().trim() === "srilanka" || flagCodeValue.toLowerCase().trim() === "lk" || flagCodeValue.toLowerCase().trim() === "sl";
 
   const { fields: achievementFields, append: appendAchievement, remove: removeAchievement } = useFieldArray({
     control: form.control,
@@ -376,6 +390,19 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="biography"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Biography</FormLabel>
+                      <FormControl>
+                        <BlogEditor value={field.value || ""} onChange={field.onChange} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -522,7 +549,7 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                   name="totalRaces"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Total Races</FormLabel>
+                      <FormLabel>{isSriLankan ? "Race Entered" : "Grand Prix Entered"}</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} />
                       </FormControl>
@@ -530,14 +557,43 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                     </FormItem>
                   )}
                 />
+                {isSriLankan ? (
+                  <FormField
+                    control={form.control}
+                    name="totalWins"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Race Wins</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  <FormField
+                    control={form.control}
+                    name="careerPoints"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Career Points</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="E.g. 5069.5" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
                 <FormField
                   control={form.control}
-                  name="totalWins"
+                  name="bestCareerFinish"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Total Wins</FormLabel>
+                      <FormLabel>Highest Race Finish</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input placeholder="E.g. 1 (x105) or 1st in SLGT 2023" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -548,7 +604,7 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                   name="totalPodiums"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Total Podiums</FormLabel>
+                      <FormLabel>Podiums</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} />
                       </FormControl>
@@ -558,12 +614,12 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                 />
                 <FormField
                   control={form.control}
-                  name="bestCareerFinish"
+                  name="careerPoles"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Best Career Finish</FormLabel>
+                      <FormLabel>Pole Positions</FormLabel>
                       <FormControl>
-                        <Input placeholder="E.g. 1st in SLGT 2023" {...field} />
+                        <Input type="number" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -574,7 +630,7 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                   name="championshipsWon"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel>Championships / Titles Won</FormLabel>
+                      <FormLabel>{isSriLankan ? "Championships" : "World Championships"}</FormLabel>
                       <FormControl>
                         <Textarea placeholder="List titles won..." {...field} />
                       </FormControl>
