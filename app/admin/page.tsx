@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Users, TrendingUp, Eye } from "lucide-react";
+import { FileText, Users, TrendingUp, Eye, PenSquare, UserPlus, MapPin, Settings } from "lucide-react";
 import { getBlogs } from "@/lib/actions/blog.actions";
 import { getDrivers } from "@/lib/actions/driver.actions";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,41 @@ export default async function AdminDashboard() {
       description: "Since last month",
       color: "text-orange-600",
       bg: "bg-orange-100 dark:bg-orange-900/20",
+    },
+  ];
+
+  const quickActions = [
+    {
+      title: "New Blog",
+      description: "Write a new story or draft",
+      href: "/admin/blogs/new",
+      icon: PenSquare,
+      color: "text-blue-600 dark:text-blue-400",
+      bg: "bg-blue-50 dark:bg-blue-950/30",
+    },
+    {
+      title: "Add Athlete",
+      description: "Register a driver or rider",
+      href: "/admin/drivers/new",
+      icon: UserPlus,
+      color: "text-green-600 dark:text-green-400",
+      bg: "bg-green-50 dark:bg-green-950/30",
+    },
+    {
+      title: "New Circuit",
+      description: "Add a race track profile",
+      href: "/admin/circuits/new",
+      icon: MapPin,
+      color: "text-purple-600 dark:text-purple-400",
+      bg: "bg-purple-50 dark:bg-purple-950/30",
+    },
+    {
+      title: "System Settings",
+      description: "View blogs and athletes",
+      href: "/admin/blogs",
+      icon: Settings,
+      color: "text-amber-600 dark:text-amber-400",
+      bg: "bg-amber-50 dark:bg-amber-950/30",
     },
   ];
 
@@ -84,14 +120,21 @@ export default async function AdminDashboard() {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-4">
-            <button className="p-4 rounded-xl border border-dashed flex flex-col items-center gap-2 hover:bg-muted/50 transition-colors">
-              <FileText className="w-6 h-6 text-primary" />
-              <span className="text-sm font-medium">New Blog</span>
-            </button>
-            <button className="p-4 rounded-xl border border-dashed flex flex-col items-center gap-2 hover:bg-muted/50 transition-colors">
-              <Users className="w-6 h-6 text-primary" />
-              <span className="text-sm font-medium">Add Rider</span>
-            </button>
+            {quickActions.map((action) => (
+              <Link
+                key={action.title}
+                href={action.href}
+                className="p-4 rounded-xl border border-border/60 flex items-start gap-4 hover:bg-muted/40 hover:border-primary/20 transition-all duration-300 group shadow-sm hover:shadow-md"
+              >
+                <div className={cn("p-2.5 rounded-lg shrink-0 transition-transform group-hover:scale-110", action.bg)}>
+                  <action.icon className={cn("w-5 h-5", action.color)} />
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-sm font-semibold tracking-tight">{action.title}</span>
+                  <span className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{action.description}</span>
+                </div>
+              </Link>
+            ))}
           </CardContent>
         </Card>
       </div>
