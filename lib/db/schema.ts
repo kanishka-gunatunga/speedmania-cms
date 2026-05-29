@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, boolean, timestamp, longtext, int } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, text, boolean, timestamp, longtext, int, primaryKey } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 
 // BLOGS TABLE
@@ -14,6 +14,24 @@ export const blogs = mysqlTable("blogs", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
 });
+
+// CATEGORIES TABLE
+export const categories = mysqlTable("categories", {
+  id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  slug: varchar("slug", { length: 191 }).notNull().unique(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
+});
+
+// BLOG CATEGORIES JUNCTION TABLE
+export const blogCategories = mysqlTable("blog_categories", {
+  blogId: varchar("blog_id", { length: 191 }).notNull(),
+  categoryId: varchar("category_id", { length: 191 }).notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.blogId, table.categoryId] })
+]);
+
 
 // DRIVERS TABLE
 export const drivers = mysqlTable("drivers", {
@@ -132,6 +150,25 @@ export const circuitFaqs = mysqlTable("circuit_faqs", {
 });
 
 // RELATIONS
+export const blogsRelations = relations(blogs, ({ many }) => ({
+  blogCategories: many(blogCategories),
+}));
+
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  blogCategories: many(blogCategories),
+}));
+
+export const blogCategoriesRelations = relations(blogCategories, ({ one }) => ({
+  blog: one(blogs, {
+    fields: [blogCategories.blogId],
+    references: [blogs.id],
+  }),
+  category: one(categories, {
+    fields: [blogCategories.categoryId],
+    references: [categories.id],
+  }),
+}));
+
 export const driversRelations = relations(drivers, ({ many }) => ({
   achievements: many(achievements),
   riderStats: many(riderStats),
@@ -163,6 +200,8 @@ export const circuitFaqsRelations = relations(circuitFaqs, ({ one }) => ({
 }));
 
 export type Blog = typeof blogs.$inferSelect;
+export type Category = typeof categories.$inferSelect;
+export type BlogCategory = typeof blogCategories.$inferSelect;
 export type Driver = typeof drivers.$inferSelect;
 export type Achievement = typeof achievements.$inferSelect;
 export type RiderStat = typeof riderStats.$inferSelect;

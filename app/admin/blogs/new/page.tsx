@@ -3,8 +3,13 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getCategories } from "@/lib/actions/category.actions";
 
-export default function NewBlogPage() {
+export const dynamic = "force-dynamic";
+
+export default async function NewBlogPage() {
+  const categoriesList = await getCategories();
+
   return (
     <div className="container mx-auto p-8 max-w-4xl">
       <div className="mb-6">
@@ -24,7 +29,7 @@ export default function NewBlogPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <BlogForm />
+          <BlogForm categories={categoriesList} />
         </CardContent>
       </Card>
     </div>

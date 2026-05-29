@@ -10,7 +10,9 @@ import {
   Settings,
   ChevronRight,
   LogOut,
-  Globe
+  Globe,
+  Tag,
+  Trophy
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -25,6 +27,11 @@ const NAV_ITEMS = [
     icon: FileText,
   },
   {
+    label: "Categories",
+    href: "/admin/categories",
+    icon: Tag,
+  },
+  {
     label: "Drivers",
     href: "/admin/drivers",
     icon: Users,
@@ -33,6 +40,11 @@ const NAV_ITEMS = [
     label: "Circuits",
     href: "/admin/circuits",
     icon: Globe,
+  },
+  {
+    label: "Results & Standings",
+    href: "/admin/results",
+    icon: Trophy,
   },
 ];
 
