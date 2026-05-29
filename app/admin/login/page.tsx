@@ -3,7 +3,7 @@
 import { useActionState, startTransition, useState, useEffect } from "react";
 import { loginAdmin } from "@/lib/actions/auth.actions";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Loader2, Trophy } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -25,46 +25,36 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center bg-[#09090b] overflow-hidden select-none font-sans">
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-black overflow-hidden select-none font-sans">
       
-      {/* 1. Glowing Racing Auras / Aural Background Gradients */}
+      {/* 1. Subtle Stark Backdrop Spotlight */}
       <div 
-        className="absolute w-[500px] h-[500px] rounded-full bg-[#000DFF]/15 blur-[120px] pointer-events-none transition-all duration-1000"
-        style={{ top: "-10%", left: "-10%" }}
-      />
-      <div 
-        className="absolute w-[600px] h-[600px] rounded-full bg-[#000580]/10 blur-[150px] pointer-events-none transition-all duration-1000"
-        style={{ bottom: "-10%", right: "-10%" }}
+        className="absolute w-[600px] h-[600px] rounded-full bg-white/[0.02] blur-[120px] pointer-events-none transition-all duration-1000"
+        style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
       />
 
       {/* 2. Micro-grid Subtle Racing Pattern */}
       <div 
-        className="absolute inset-0 opacity-[0.02] mix-blend-overlay pointer-events-none"
+        className="absolute inset-0 opacity-[0.015] mix-blend-overlay pointer-events-none"
         style={{ 
           backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)", 
-          backgroundSize: "20px 20px" 
+          backgroundSize: "24px 24px" 
         }} 
       />
 
-      {/* 3. Glassmorphic Card Container */}
-      <div className="relative w-full max-w-[420px] mx-4 z-10">
+      {/* 3. Stark Minimalist Card Container */}
+      <div className="relative w-full max-w-[390px] mx-4 z-10">
         
-        {/* Animated outer glowing border */}
-        <div className="absolute -inset-0.5 rounded-[24px] bg-gradient-to-r from-[#000DFF]/30 to-[#000580]/30 opacity-70 blur-sm pointer-events-none" />
-
-        <div className="relative w-full bg-[#18181b]/70 backdrop-blur-xl border border-zinc-800/80 rounded-[24px] px-8 py-10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col items-center">
+        <div className="relative w-full bg-zinc-950 border border-zinc-900 rounded-lg px-8 py-10 shadow-2xl flex flex-col items-center">
           
-          {/* Header Icon & Title */}
-          <div className="w-[60px] h-[60px] rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-6 shadow-inner group transition-transform duration-500 hover:rotate-12">
-            <Trophy className="w-6 h-6 text-[#000DFF] drop-shadow-[0_0_10px_rgba(0,13,255,0.6)]" />
+          <div className="flex flex-col items-center mb-8 text-center">
+            <h1 className="text-xl font-bold uppercase tracking-widest text-white leading-none mb-1">
+              SPEEDMANIA
+            </h1>
+            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
+              Control Tower Login
+            </p>
           </div>
-
-          <h1 className="text-2xl font-bold uppercase tracking-tight text-white mb-1 leading-none font-sans">
-            Speedmania Admin
-          </h1>
-          <p className="text-xs text-zinc-500 font-semibold uppercase tracking-widest mb-8">
-            Control Tower Login
-          </p>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="w-full flex flex-col gap-5 text-left">
@@ -73,7 +63,7 @@ export default function AdminLoginPage() {
             <div className="flex flex-col gap-1.5">
               <label 
                 htmlFor="username" 
-                className="text-[10px] font-black uppercase tracking-widest text-zinc-400 pl-1"
+                className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 pl-0.5"
               >
                 Username
               </label>
@@ -83,8 +73,8 @@ export default function AdminLoginPage() {
                 type="text"
                 required
                 disabled={isPending}
-                placeholder="Enter admin username"
-                className="w-full h-11 bg-zinc-950/80 border border-zinc-800 rounded-xl px-4 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#000DFF] focus:ring-1 focus:ring-[#000DFF] focus:shadow-[0_0_15px_rgba(0,13,255,0.15)] transition-all duration-300 disabled:opacity-50"
+                placeholder="admin"
+                className="w-full h-10 bg-black border border-zinc-800 rounded-md px-3 text-sm text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-zinc-400 focus:ring-0 transition-all duration-200 disabled:opacity-50"
               />
             </div>
 
@@ -92,7 +82,7 @@ export default function AdminLoginPage() {
             <div className="flex flex-col gap-1.5">
               <label 
                 htmlFor="password" 
-                className="text-[10px] font-black uppercase tracking-widest text-zinc-400 pl-1"
+                className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 pl-0.5"
               >
                 Password
               </label>
@@ -104,7 +94,7 @@ export default function AdminLoginPage() {
                   required
                   disabled={isPending}
                   placeholder="••••••••"
-                  className="w-full h-11 bg-zinc-950/80 border border-zinc-800 rounded-xl pl-4 pr-11 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#000DFF] focus:ring-1 focus:ring-[#000DFF] focus:shadow-[0_0_15px_rgba(0,13,255,0.15)] transition-all duration-300 disabled:opacity-50"
+                  className="w-full h-10 bg-black border border-zinc-800 rounded-md pl-3 pr-10 text-sm text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-zinc-400 focus:ring-0 transition-all duration-200 disabled:opacity-50"
                 />
                 
                 {/* Visibility Toggler */}
@@ -112,13 +102,13 @@ export default function AdminLoginPage() {
                   type="button"
                   disabled={isPending}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors p-1 rounded focus:outline-none cursor-pointer disabled:opacity-50"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-400 transition-colors p-1 rounded focus:outline-none cursor-pointer disabled:opacity-50"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
+                    <EyeOff className="w-3.5 h-3.5" />
                   ) : (
-                    <Eye className="w-4 h-4" />
+                    <Eye className="w-3.5 h-3.5" />
                   )}
                 </button>
               </div>
@@ -126,9 +116,9 @@ export default function AdminLoginPage() {
 
             {/* Error Message banner */}
             {state?.error && (
-              <div className="w-full px-4 py-3 bg-red-950/20 border border-red-900/50 rounded-xl flex items-center gap-3 animate-pulse">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
-                <p className="text-xs text-red-400 font-bold uppercase tracking-tight">
+              <div className="w-full px-3 py-2.5 bg-black border border-red-900/60 rounded-md flex items-center gap-2">
+                <span className="w-1 h-1 rounded-full bg-red-500 shrink-0" />
+                <p className="text-[11px] text-red-500 font-semibold tracking-tight uppercase">
                   {state.error}
                 </p>
               </div>
@@ -138,19 +128,15 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={isPending}
-              className="relative group/btn w-full h-11 bg-[#000DFF] hover:bg-[#0006c7] disabled:bg-zinc-800 disabled:cursor-not-allowed text-white font-bold text-xs uppercase tracking-widest rounded-xl shadow-[0_4px_25px_rgba(0,13,255,0.3)] hover:shadow-[0_6px_35px_rgba(0,13,255,0.5)] transition-all duration-300 flex items-center justify-center cursor-pointer mt-3"
+              className="relative w-full h-10 bg-white hover:bg-zinc-200 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:cursor-not-allowed text-black font-bold text-[10px] uppercase tracking-widest rounded-md transition-all duration-200 flex items-center justify-center cursor-pointer mt-2"
             >
               {isPending ? (
                 <div className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>Clearing Grid...</span>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-600" />
+                  <span>Entering...</span>
                 </div>
               ) : (
-                <>
-                  <span>Initialize Dashboard</span>
-                  {/* Subtle shining light micro-animation */}
-                  <div className="absolute inset-0 w-1/2 h-full bg-white/10 skew-x-[-20deg] translate-x-[-120%] group-hover/btn:animate-[shimmer_1.5s_infinite] pointer-events-none" />
-                </>
+                <span>Access Dashboard</span>
               )}
             </button>
 
