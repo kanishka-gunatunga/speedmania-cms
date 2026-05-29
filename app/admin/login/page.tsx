@@ -52,7 +52,7 @@ export default function AdminLoginPage() {
               SPEEDMANIA
             </h1>
             <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
-              Control Tower Login
+              CMS Login
             </p>
           </div>
 
