@@ -36,7 +36,7 @@ export default async function NewAchievementPage({ searchParams }: PageProps) {
         <CardHeader className="pb-6">
           <CardTitle className="text-3xl font-extrabold">Add New Race Result</CardTitle>
           <CardDescription className="text-base text-muted-foreground mt-1">
-            Create an achievement record detailing an athlete's finish in a specific Grand Prix event.
+            Create an achievement record detailing an athlete&#39;s finish in a specific Grand Prix event.
           </CardDescription>
         </CardHeader>
         <CardContent>

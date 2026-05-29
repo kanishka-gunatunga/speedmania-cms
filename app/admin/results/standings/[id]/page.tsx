@@ -41,7 +41,7 @@ export default async function EditRiderStatPage({ params }: PageProps) {
       <Card className="border-border/50 shadow-sm">
         <CardHeader className="pb-6">
           <CardTitle className="text-3xl font-extrabold flex items-center gap-2">
-            <Award className="w-8 h-8 text-yellow-500 shrink-0" />
+            {/*<Award className="w-8 h-8 text-yellow-500 shrink-0" />*/}
             Edit Driver Standings
           </CardTitle>
           <CardDescription className="text-base text-muted-foreground mt-1">
