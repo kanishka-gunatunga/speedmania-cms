@@ -40,6 +40,7 @@ const formSchema = z.object({
   featuredImage: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal("")),
   author: z.string().optional(),
   published: z.boolean().default(false),
+  categoryIds: z.array(z.string()).default([]),
 });
 
 type BlogFormValues = z.infer<typeof formSchema>;
@@ -54,10 +55,12 @@ interface BlogFormProps {
     featuredImage?: string | null;
     author?: string | null;
     published?: boolean;
+    categories?: { id: string; name: string; slug: string }[];
   };
+  categories: { id: string; name: string; slug: string }[];
 }
 
-export function BlogForm({ initialData }: BlogFormProps) {
+export function BlogForm({ initialData, categories = [] }: BlogFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +75,7 @@ export function BlogForm({ initialData }: BlogFormProps) {
       featuredImage: initialData?.featuredImage || "",
       author: initialData?.author || "",
       published: !!initialData?.published,
+      categoryIds: initialData?.categories?.map(c => c.id) || [],
     },
   });
 
@@ -190,6 +194,55 @@ export function BlogForm({ initialData }: BlogFormProps) {
               )}
             />
           </div>
+
+          <FormField
+            control={form.control}
+            name="categoryIds"
+            render={({ field }) => (
+              <FormItem className="space-y-3 rounded-lg border p-4 shadow-sm bg-muted/20">
+                <div>
+                  <FormLabel className="text-base font-semibold">Categories</FormLabel>
+                  <FormDescription>
+                    Assign this blog post to one or more categories.
+                  </FormDescription>
+                </div>
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  {categories.map((category) => {
+                    const isChecked = field.value?.includes(category.id);
+                    return (
+                      <div
+                        key={category.id}
+                        className="flex flex-row items-center space-x-3 space-y-0"
+                      >
+                        <input
+                          type="checkbox"
+                          id={`cat-${category.id}`}
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            const value = field.value || [];
+                            if (checked) {
+                              field.onChange([...value, category.id]);
+                            } else {
+                              field.onChange(value.filter((val) => val !== category.id));
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`cat-${category.id}`}
+                          className="text-sm font-medium leading-none cursor-pointer select-none"
+                        >
+                          {category.name}
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}

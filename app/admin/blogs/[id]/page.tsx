@@ -1,14 +1,18 @@
 import { BlogForm } from "@/components/blogs/blog-form";
 import { getBlogById } from "@/lib/actions/blog.actions";
+import { getCategories } from "@/lib/actions/category.actions";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
+export const dynamic = "force-dynamic";
+
 export default async function EditBlogPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const blog = await getBlogById(resolvedParams.id);
+  const categoriesList = await getCategories();
 
   if (!blog) {
     notFound();
@@ -33,7 +37,7 @@ export default async function EditBlogPage({ params }: { params: Promise<{ id: s
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <BlogForm initialData={blog} />
+          <BlogForm initialData={blog} categories={categoriesList} />
         </CardContent>
       </Card>
     </div>

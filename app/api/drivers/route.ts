@@ -8,6 +8,8 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type");
+    const season = parseInt(searchParams.get("season") || "2026");
+    const category = searchParams.get("category") || "Formula 1";
 
     const whereConditions = [eq(drivers.status, "approved")];
     if (type === "driver" || type === "rider") {
@@ -49,7 +51,8 @@ export async function GET(request: Request) {
         riderStats,
         and(
           eq(drivers.id, riderStats.driverId),
-          eq(riderStats.season, 2026)
+          eq(riderStats.season, season),
+          eq(riderStats.category, category)
         )
       )
       .where(and(...whereConditions))
