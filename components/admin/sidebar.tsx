@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { 
-  FileText, 
-  Users, 
-  LayoutDashboard, 
+import {
+  FileText,
+  Users,
+  LayoutDashboard,
   Settings,
   ChevronRight,
   LogOut,
@@ -48,8 +48,19 @@ const NAV_ITEMS = [
   },
 ];
 
+import { logoutAdmin } from "@/lib/actions/auth.actions";
+import { startTransition } from "react";
+
 export function AdminSidebar() {
   const pathname = usePathname();
+
+  const handleLogout = () => {
+    if (confirm("Are you sure you want to log out of the CMS?")) {
+      startTransition(async () => {
+        await logoutAdmin();
+      });
+    }
+  };
 
   return (
     <div className="w-64 border-r bg-card h-screen sticky top-0 flex flex-col shadow-sm">
@@ -67,8 +78,8 @@ export function AdminSidebar() {
 
       <nav className="flex-1 p-4 space-y-2 mt-4">
         {NAV_ITEMS.map((item) => {
-          const isActive = item.href === "/admin" 
-            ? pathname === "/admin" 
+          const isActive = item.href === "/admin"
+            ? pathname === "/admin"
             : pathname.startsWith(item.href);
           return (
             <Link
@@ -76,8 +87,8 @@ export function AdminSidebar() {
               href={item.href}
               className={cn(
                 "flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group",
-                isActive 
-                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" 
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
@@ -100,7 +111,8 @@ export function AdminSidebar() {
           <span className="font-medium">Settings</span>
         </Link>
         <button
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-colors group"
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-colors group cursor-pointer"
         >
           <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span className="font-medium">Logout</span>
