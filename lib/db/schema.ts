@@ -199,6 +199,16 @@ export const circuitFaqsRelations = relations(circuitFaqs, ({ one }) => ({
   }),
 }));
 
+// USERS TABLE
+export const users = mysqlTable("users", {
+  id: varchar("id", { length: 191 }).primaryKey(),
+  username: varchar("username", { length: 100 }).notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  role: varchar("role", { length: 20 }).default("admin"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
+});
+
 export type Blog = typeof blogs.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type BlogCategory = typeof blogCategories.$inferSelect;
@@ -207,3 +217,4 @@ export type Achievement = typeof achievements.$inferSelect;
 export type RiderStat = typeof riderStats.$inferSelect;
 export type Circuit = typeof circuits.$inferSelect;
 export type CircuitFaq = typeof circuitFaqs.$inferSelect;
+export type User = typeof users.$inferSelect;

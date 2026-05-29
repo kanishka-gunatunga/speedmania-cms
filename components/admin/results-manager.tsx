@@ -14,13 +14,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { 
-  Trophy, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Calendar, 
-  Filter, 
+import {
+  Trophy,
+  Plus,
+  Edit,
+  Trash2,
+  Calendar,
+  Filter,
   Sparkles,
   MapPin,
   Car,
@@ -169,16 +169,16 @@ export function ResultsManager({
 
   return (
     <div className="container mx-auto p-8 max-w-7xl">
-      
+
       {/* ── Page Header ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
-          <div className="flex items-center gap-2 text-xs text-primary font-black uppercase tracking-widest font-orbitron mb-1 animate-pulse">
+          {/* <div className="flex items-center gap-2 text-xs text-primary font-black uppercase tracking-widest font-orbitron mb-1 animate-pulse">
             <Sparkles className="w-3.5 h-3.5" />
             Live CMS System
-          </div>
+          </div> */}
           <h1 className="text-4xl font-extrabold tracking-tight flex items-center gap-3">
-            <Trophy className="w-10 h-10 text-yellow-500 shrink-0" />
+            {/* <Trophy className="w-10 h-10 text-yellow-500 shrink-0" /> */}
             Results & Standings
           </h1>
           <p className="text-muted-foreground mt-2 text-lg">
@@ -224,21 +224,19 @@ export function ResultsManager({
           <div className="flex items-center gap-0 border border-border rounded-xl overflow-hidden bg-background">
             <button
               onClick={() => setRegionFilter("all")}
-              className={`px-3 py-1.5 text-xs font-bold transition-all ${
-                regionFilter === "all"
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`px-3 py-1.5 text-xs font-bold transition-all ${regionFilter === "all"
+                ? "bg-primary text-primary-foreground shadow-md"
+                : "text-muted-foreground hover:text-foreground"
+                }`}
             >
-              🌍 All Intl
+              All Intl
             </button>
             <button
               onClick={() => setRegionFilter("sl")}
-              className={`px-3 py-1.5 text-xs font-bold transition-all ${
-                regionFilter === "sl"
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`px-3 py-1.5 text-xs font-bold transition-all ${regionFilter === "sl"
+                ? "bg-primary text-primary-foreground shadow-md"
+                : "text-muted-foreground hover:text-foreground"
+                }`}
             >
               🇱🇰 SL Only
             </button>
@@ -260,7 +258,7 @@ export function ResultsManager({
             <p className="text-xs text-muted-foreground mt-1">Unique Grand Prix routes in {selectedYear}</p>
           </CardContent>
         </Card>
-        
+
         <Card className="border-border/50 shadow-sm hover:shadow-md transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Athletes Ranked</CardTitle>
@@ -387,15 +385,14 @@ export function ResultsManager({
                               </TableCell>
                               <TableCell className="font-medium text-muted-foreground/80">{ach.team || "—"}</TableCell>
                               <TableCell className="text-center">
-                                <span className={`px-2 py-0.5 rounded text-xs font-black uppercase font-orbitron ${
-                                  ach.position === "1"
-                                    ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200"
-                                    : ach.position === "2"
+                                <span className={`px-2 py-0.5 rounded text-xs font-black uppercase font-orbitron ${ach.position === "1"
+                                  ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200"
+                                  : ach.position === "2"
                                     ? "bg-zinc-200 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300"
                                     : ach.position === "3"
-                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
-                                    : "bg-muted text-muted-foreground"
-                                }`}>
+                                      ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+                                      : "bg-muted text-muted-foreground"
+                                  }`}>
                                   P{ach.position}
                                 </span>
                               </TableCell>
