@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { createDriver, updateDriver } from "@/lib/actions/driver.actions";
 import { BlogEditor } from "@/components/blogs/blog-editor";
+import { ImageUploadField } from "@/components/ui/image-upload-field";
 
 const achievementSchema = z.object({
   raceName: z.string().min(1, "Race name is required"),
@@ -499,14 +500,18 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                     </FormItem>
                   )}
                 />
-                <FormField
+                 <FormField
                   control={form.control}
                   name="image"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel>Driver Portrait URL</FormLabel>
+                      <FormLabel>Driver Portrait</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://media.formula1.com/..." {...field} />
+                        <ImageUploadField
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          placeholder="https://media.formula1.com/..."
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -517,9 +522,13 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                   name="numberImage"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel>Driver Number Mask URL (Transparent SVG/PNG)</FormLabel>
+                      <FormLabel>Driver Number Mask (Transparent SVG/PNG)</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://media.formula1.com/..." {...field} />
+                        <ImageUploadField
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          placeholder="https://media.formula1.com/..."
+                        />
                       </FormControl>
                       <FormDescription>Used for the large background number branding</FormDescription>
                       <FormMessage />

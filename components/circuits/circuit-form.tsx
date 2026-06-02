@@ -24,6 +24,7 @@ import { BlogEditor } from "../blogs/blog-editor";
 import { createCircuit, updateCircuit } from "@/lib/actions/circuit.actions";
 import { Textarea } from "@/components/ui/textarea";
 import { UseFormReturn } from "react-hook-form";
+import { ImageUploadField } from "@/components/ui/image-upload-field";
 
 const faqSchema = z.object({
   question: z.string().min(1, "Question is required"),
@@ -159,14 +160,18 @@ export function CircuitForm({ initialData }: CircuitFormProps) {
                     </FormItem>
                   )}
                 />
-                <FormField
+                 <FormField
                   control={form.control}
                   name="trackImage"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel>Track Layout Image URL (Structure)</FormLabel>
+                      <FormLabel>Track Layout Image</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://example.com/track.png" {...field} />
+                        <ImageUploadField
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          placeholder="https://example.com/track.png"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -177,9 +182,13 @@ export function CircuitForm({ initialData }: CircuitFormProps) {
                   name="aboutImage"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel>About Section Cover Image URL</FormLabel>
+                      <FormLabel>About Section Cover Image</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://example.com/about.jpg" {...field} />
+                        <ImageUploadField
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          placeholder="https://example.com/about.jpg"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -188,18 +197,47 @@ export function CircuitForm({ initialData }: CircuitFormProps) {
                 <FormField
                   control={form.control}
                   name="galleryImages"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-2">
-                      <FormLabel>Gallery Image URLs (Comma-separated list)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://example.com/img1.jpg, https://example.com/img2.jpg, ..." {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Provide up to 4 high-resolution image URLs, separated by commas.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    const galleryImagesValue = field.value || "";
+                    const galleryImagesArray = galleryImagesValue
+                      ? galleryImagesValue.split(",").map((img) => img.trim())
+                      : [];
+                    const slots = Array.from({ length: 4 }, (_, i) => galleryImagesArray[i] || "");
+
+                    return (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Gallery Images (Up to 4)</FormLabel>
+                        <FormControl>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
+                            {slots.map((slotValue, index) => (
+                              <div key={index} className="space-y-1.5 p-3.5 border border-border/80 rounded-xl bg-muted/10 shadow-sm animate-in fade-in duration-200">
+                                <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                                  Gallery Slot {index + 1}
+                                </div>
+                                <ImageUploadField
+                                  value={slotValue}
+                                  onChange={(newUrl) => {
+                                    const newSlots = [...slots];
+                                    newSlots[index] = newUrl;
+                                    const updatedValue = newSlots
+                                      .map((s) => s.trim())
+                                      .filter(Boolean)
+                                      .join(",");
+                                    field.onChange(updatedValue);
+                                  }}
+                                  placeholder={`https://example.com/gallery${index + 1}.jpg`}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </FormControl>
+                        <FormDescription>
+                          Provide up to 4 high-resolution images by pasting URLs or uploading them directly.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
                 <FormField
                   control={form.control}

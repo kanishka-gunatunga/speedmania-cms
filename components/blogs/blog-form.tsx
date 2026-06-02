@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { BlogEditor } from "./blog-editor";
 import { createBlog, updateBlog } from "@/lib/actions/blog.actions";
+import { ImageUploadField } from "@/components/ui/image-upload-field";
 
 // Form Schema
 const formSchema = z.object({
@@ -172,9 +173,13 @@ export function BlogForm({ initialData, categories = [] }: BlogFormProps) {
               name="featuredImage"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Featured Image URL (Optional)</FormLabel>
+                  <FormLabel>Featured Image</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://example.com/image.jpg" {...field} />
+                    <ImageUploadField
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      placeholder="https://example.com/image.jpg"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
