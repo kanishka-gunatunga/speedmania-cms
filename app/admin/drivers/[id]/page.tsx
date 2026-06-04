@@ -1,10 +1,12 @@
 import { DriverForm } from "@/components/drivers/driver-form";
-import { getDriverById } from "@/lib/actions/driver.actions";
+import { getDriverById, approvePendingChanges, rejectPendingChanges } from "@/lib/actions/driver.actions";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Check, X, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+export const dynamic = "force-dynamic";
 
 export default async function EditDriverPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -12,6 +14,62 @@ export default async function EditDriverPage({ params }: { params: Promise<{ id:
 
   if (!driver) {
     notFound();
+  }
+
+  const pendingData = driver.pendingChanges ? JSON.parse(driver.pendingChanges) : null;
+  const diffs: { label: string; current: string; pending: string }[] = [];
+
+  if (pendingData) {
+    const fieldsToCompare = [
+      { key: "fullName", label: "Full Name" },
+      { key: "firstName", label: "First Name" },
+      { key: "lastName", label: "Last Name" },
+      { key: "dob", label: "Date of Birth" },
+      { key: "otherName", label: "Quote / Alias" },
+      { key: "slug", label: "Slug" },
+      { key: "racingCategory", label: "Racing Category" },
+      { key: "yearsActive", label: "Years Active" },
+      { key: "totalRaces", label: "Total Races" },
+      { key: "totalWins", label: "Total Wins" },
+      { key: "totalPodiums", label: "Total Podiums" },
+      { key: "bestCareerFinish", label: "Best Career Finish" },
+      { key: "championshipsWon", label: "Championships" },
+      { key: "currentTeam", label: "Current Team" },
+      { key: "previousTeams", label: "Previous Teams" },
+      { key: "sponsorDetails", label: "Sponsor Details" },
+      { key: "teamColor", label: "Team Hex Color" },
+      { key: "accessibleColor", label: "Accessible Hex Color" },
+      { key: "number", label: "Driver Number" },
+      { key: "image", label: "Portrait URL" },
+      { key: "numberImage", label: "Number Mask URL" },
+      { key: "flagCode", label: "Country Flag Code" },
+      { key: "country", label: "Country Name" },
+      { key: "vehicleModel", label: "Vehicle Model" },
+      { key: "engineCapacity", label: "Engine Capacity" },
+      { key: "vehicleClass", label: "Vehicle Class" },
+      { key: "chassisNumber", label: "Chassis Number" },
+      { key: "liveryScheme", label: "Livery Scheme" },
+      { key: "playerType", label: "Athlete Type" },
+      { key: "careerPoints", label: "Career Points" },
+      { key: "careerPoles", label: "Career Poles" },
+      { key: "biography", label: "Biography" }
+    ];
+
+    fieldsToCompare.forEach(({ key, label }) => {
+      const currentVal = (driver as any)[key];
+      const pendingVal = pendingData[key];
+      
+      const normCurrent = String(currentVal || "").trim();
+      const normPending = String(pendingVal || "").trim();
+
+      if (normCurrent !== normPending) {
+        diffs.push({
+          label,
+          current: normCurrent || "(empty)",
+          pending: normPending || "(empty)"
+        });
+      }
+    });
   }
 
   return (
@@ -25,6 +83,81 @@ export default async function EditDriverPage({ params }: { params: Promise<{ id:
         </Link>
       </div>
 
+      {/* Comparison view for pending edits */}
+      {pendingData && (
+        <Card className="border-blue-500/30 bg-blue-500/5 mb-8 shadow-sm">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+              <AlertTriangle className="w-5 h-5 shrink-0" />
+              <CardTitle className="text-xl font-bold uppercase tracking-wider">Proposed Edits Awaiting Review</CardTitle>
+            </div>
+            <CardDescription className="text-sm text-blue-600/80 dark:text-blue-400/80">
+              This driver has submitted updates to their profile. Review the changes below before approving or rejecting.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Diffs Table */}
+            <div className="rounded-md border border-blue-500/20 bg-background/50 overflow-hidden">
+              <table className="w-full text-sm text-left border-collapse">
+                <thead>
+                  <tr className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
+                    <th className="px-4 py-2 font-bold w-1/4">Field</th>
+                    <th className="px-4 py-2 font-bold w-3/8 text-zinc-500">Current Value</th>
+                    <th className="px-4 py-2 font-bold w-3/8 text-blue-600 dark:text-blue-400">Proposed Value</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {diffs.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="px-4 py-4 text-center text-muted-foreground">
+                        No field differences found (achievements or stats may have changed).
+                      </td>
+                    </tr>
+                  ) : (
+                    diffs.map((diff, index) => (
+                      <tr key={index} className="hover:bg-muted/20">
+                        <td className="px-4 py-3 font-semibold text-foreground">{diff.label}</td>
+                        <td className="px-4 py-3 text-zinc-500 break-all">{diff.current}</td>
+                        <td className="px-4 py-3 text-blue-600 dark:text-blue-400 font-medium break-all">{diff.pending}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Achievements & Stats Note */}
+            <div className="text-xs text-muted-foreground italic">
+              Note: Approving will also overwrite any achievements and rider stats with the values submitted in this draft.
+            </div>
+
+            {/* Actions Panel */}
+            <div className="flex gap-4">
+              <form action={async () => {
+                "use server";
+                await approvePendingChanges(driver.id);
+              }}>
+                <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white gap-2 font-bold uppercase tracking-wider text-xs">
+                  <Check className="w-4 h-4" />
+                  Approve Changes
+                </Button>
+              </form>
+
+              <form action={async () => {
+                "use server";
+                await rejectPendingChanges(driver.id);
+              }}>
+                <Button type="submit" variant="destructive" className="gap-2 font-bold uppercase tracking-wider text-xs">
+                  <X className="w-4 h-4" />
+                  Reject Changes
+                </Button>
+              </form>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Main Edit Form */}
       <Card className="border-border/50 shadow-sm">
         <CardHeader className="pb-8">
           <CardTitle className="text-3xl font-extrabold">Edit Profile: {driver.fullName}</CardTitle>

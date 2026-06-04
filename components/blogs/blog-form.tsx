@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { BlogEditor } from "./blog-editor";
 import { createBlog, updateBlog } from "@/lib/actions/blog.actions";
+import { ImageUploadField } from "@/components/ui/image-upload-field";
 
 // Form Schema
 const formSchema = z.object({
@@ -55,9 +56,9 @@ interface BlogFormProps {
     featuredImage?: string | null;
     author?: string | null;
     published?: boolean;
-    categories?: { id: string; name: string; slug: string }[];
+    categories?: { id: string; name: string; slug: string; parentId?: string | null }[];
   };
-  categories: { id: string; name: string; slug: string }[];
+  categories: { id: string; name: string; slug: string; parentId?: string | null }[];
 }
 
 export function BlogForm({ initialData, categories = [] }: BlogFormProps) {
@@ -172,9 +173,13 @@ export function BlogForm({ initialData, categories = [] }: BlogFormProps) {
               name="featuredImage"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Featured Image URL (Optional)</FormLabel>
+                  <FormLabel>Featured Image</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://example.com/image.jpg" {...field} />
+                    <ImageUploadField
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      placeholder="https://example.com/image.jpg"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -198,50 +203,135 @@ export function BlogForm({ initialData, categories = [] }: BlogFormProps) {
           <FormField
             control={form.control}
             name="categoryIds"
-            render={({ field }) => (
-              <FormItem className="space-y-3 rounded-lg border p-4 shadow-sm bg-muted/20">
-                <div>
-                  <FormLabel className="text-base font-semibold">Categories</FormLabel>
-                  <FormDescription>
-                    Assign this blog post to one or more categories.
-                  </FormDescription>
-                </div>
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  {categories.map((category) => {
-                    const isChecked = field.value?.includes(category.id);
-                    return (
-                      <div
-                        key={category.id}
-                        className="flex flex-row items-center space-x-3 space-y-0"
-                      >
-                        <input
-                          type="checkbox"
-                          id={`cat-${category.id}`}
-                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-                          checked={isChecked}
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            const value = field.value || [];
-                            if (checked) {
-                              field.onChange([...value, category.id]);
-                            } else {
-                              field.onChange(value.filter((val) => val !== category.id));
-                            }
-                          }}
-                        />
-                        <label
-                          htmlFor={`cat-${category.id}`}
-                          className="text-sm font-medium leading-none cursor-pointer select-none"
-                        >
-                          {category.name}
-                        </label>
-                      </div>
-                    );
-                  })}
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              // Group categories into parent-child structure
+              const parentCategories = categories.filter((c) => !c.parentId);
+              const childCategoriesMap = categories.reduce((acc, cat) => {
+                if (cat.parentId) {
+                  if (!acc[cat.parentId]) acc[cat.parentId] = [];
+                  acc[cat.parentId].push(cat);
+                }
+                return acc;
+              }, {} as Record<string, typeof categories>);
+
+              return (
+                <FormItem className="space-y-3 rounded-lg border p-4 shadow-sm bg-muted/20">
+                  <div>
+                    <FormLabel className="text-base font-semibold">Categories</FormLabel>
+                    <FormDescription>
+                      Assign this blog post to one or more categories.
+                    </FormDescription>
+                  </div>
+                  <div className="flex flex-col gap-4 pt-2">
+                    {parentCategories.map((parent) => {
+                      const children = childCategoriesMap[parent.id] || [];
+                      const isParentChecked = field.value?.includes(parent.id);
+                      return (
+                        <div key={parent.id} className="space-y-2">
+                          {/* Parent Category */}
+                          <div className="flex flex-row items-center space-x-3 space-y-0">
+                            <input
+                              type="checkbox"
+                              id={`cat-${parent.id}`}
+                              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                              checked={isParentChecked}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                const value = field.value || [];
+                                if (checked) {
+                                  field.onChange([...value, parent.id]);
+                                } else {
+                                  field.onChange(value.filter((val) => val !== parent.id));
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor={`cat-${parent.id}`}
+                              className="text-sm font-bold leading-none cursor-pointer select-none text-foreground"
+                            >
+                              {parent.name}
+                            </label>
+                          </div>
+
+                          {/* Indented Children Categories */}
+                          {children.length > 0 && (
+                            <div className="pl-6 border-l border-border/60 ml-2 space-y-2 flex flex-col pt-1">
+                              {children.map((child) => {
+                                const isChildChecked = field.value?.includes(child.id);
+                                return (
+                                  <div
+                                    key={child.id}
+                                    className="flex flex-row items-center space-x-3 space-y-0"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      id={`cat-${child.id}`}
+                                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                                      checked={isChildChecked}
+                                      onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        const value = field.value || [];
+                                        if (checked) {
+                                          field.onChange([...value, child.id]);
+                                        } else {
+                                          field.onChange(value.filter((val) => val !== child.id));
+                                        }
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor={`cat-${child.id}`}
+                                      className="text-sm font-medium leading-none cursor-pointer select-none text-muted-foreground hover:text-foreground"
+                                    >
+                                      {child.name}
+                                    </label>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    {/* Render orphan sub-categories (fallback safety) */}
+                    {categories
+                      .filter((c) => c.parentId && !categories.some((p) => p.id === c.parentId))
+                      .map((orphan) => {
+                        const isOrphanChecked = field.value?.includes(orphan.id);
+                        return (
+                          <div
+                            key={orphan.id}
+                            className="flex flex-row items-center space-x-3 space-y-0"
+                          >
+                            <input
+                              type="checkbox"
+                              id={`cat-${orphan.id}`}
+                              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                              checked={isOrphanChecked}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                const value = field.value || [];
+                                if (checked) {
+                                  field.onChange([...value, orphan.id]);
+                                } else {
+                                  field.onChange(value.filter((val) => val !== orphan.id));
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor={`cat-${orphan.id}`}
+                              className="text-sm font-medium leading-none cursor-pointer select-none"
+                            >
+                              {orphan.name}
+                            </label>
+                          </div>
+                        );
+                      })}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
 
           <FormField

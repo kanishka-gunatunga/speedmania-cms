@@ -11,6 +11,7 @@ export async function GET() {
         id: categories.id,
         name: categories.name,
         slug: categories.slug,
+        parentId: categories.parentId,
       })
       .from(categories)
       .orderBy(asc(categories.name));

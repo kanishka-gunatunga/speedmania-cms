@@ -23,23 +23,25 @@ interface BlogEditorProps {
   onChange: (value: string) => void;
 }
 
+const extensions = [
+  StarterKit,
+  Image.configure({
+    inline: true,
+    HTMLAttributes: {
+      class: "max-w-full h-auto rounded-md my-4",
+    },
+  }),
+  Link.configure({
+    openOnClick: false,
+    HTMLAttributes: {
+      class: "text-blue-500 underline underline-offset-4 hover:text-blue-700 cursor-pointer",
+    },
+  }),
+];
+
 export function BlogEditor({ value, onChange }: BlogEditorProps) {
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Image.configure({
-        inline: true,
-        HTMLAttributes: {
-          class: "max-w-full h-auto rounded-md my-4",
-        },
-      }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: "text-blue-500 underline underline-offset-4 hover:text-blue-700 cursor-pointer",
-        },
-      }),
-    ],
+    extensions,
     immediatelyRender: false,
     content: value,
     onUpdate: ({ editor }) => {

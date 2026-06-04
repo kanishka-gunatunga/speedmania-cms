@@ -1,6 +1,8 @@
 import { BlogForm } from "@/components/blogs/blog-form";
 import { getBlogById } from "@/lib/actions/blog.actions";
 import { getCategories } from "@/lib/actions/category.actions";
+import { getCommentsByBlogId } from "@/lib/actions/comment.actions";
+import { BlogComments } from "@/components/blogs/blog-comments";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
@@ -17,6 +19,8 @@ export default async function EditBlogPage({ params }: { params: Promise<{ id: s
   if (!blog) {
     notFound();
   }
+
+  const comments = await getCommentsByBlogId(resolvedParams.id);
 
   return (
     <div className="container mx-auto p-8 max-w-4xl">
@@ -40,6 +44,8 @@ export default async function EditBlogPage({ params }: { params: Promise<{ id: s
           <BlogForm initialData={blog} categories={categoriesList} />
         </CardContent>
       </Card>
+
+      <BlogComments blogId={resolvedParams.id} initialComments={comments} />
     </div>
   );
 }

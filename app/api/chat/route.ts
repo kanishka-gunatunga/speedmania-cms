@@ -13,7 +13,7 @@ const getOpenAIClient = () => {
     console.warn("[CHAT_API] OPENAI_API_KEY environment variable is not defined.");
   }
   return new OpenAI({
-    apiKey: apiKey || "dummy-key-for-now",
+    apiKey: apiKey,
   });
 };
 

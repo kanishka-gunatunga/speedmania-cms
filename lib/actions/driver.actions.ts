@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db, drivers, achievements, riderStats } from "@/lib/db";
 import { eq, desc } from "drizzle-orm";
+import { getCurrentUser, getCurrentAdmin } from "./auth.actions";
 
 export async function getDrivers() {
   try {
@@ -32,6 +33,7 @@ export async function getDriverById(id: string) {
 
 export async function createDriver(data: any) {
   try {
+    const user = await getCurrentUser();
     const id = crypto.randomUUID();
     const { achievements: achievementsData, riderStats: statsData, ...driverInfo } = data;
 
@@ -39,6 +41,8 @@ export async function createDriver(data: any) {
       // 1. Insert main driver profile
       await tx.insert(drivers).values({
         id,
+        userId: user ? user.id : null,
+        status: "pending",
         ...driverInfo,
       });
 
@@ -97,14 +101,49 @@ export async function createDriver(data: any) {
 export async function updateDriver(id: string, data: any) {
   try {
     console.log(`[UPDATE_DRIVER] Starting update for ID: ${id}`);
+    const admin = await getCurrentAdmin();
     const { achievements: achievementsData, riderStats: statsData, ...driverInfo } = data;
 
+    // Check if driver has "approved" status and this is updated by a non-admin (a driver user)
+    if (!admin) {
+      const existingDriver = await db.query.drivers.findFirst({
+        where: eq(drivers.id, id),
+      });
+
+      if (existingDriver && existingDriver.status === "approved") {
+        // Save to pendingChanges as JSON
+        const serialized = JSON.stringify({
+          ...driverInfo,
+          achievements: achievementsData || [],
+          riderStats: statsData || [],
+        });
+
+        await db.update(drivers).set({
+          pendingChanges: serialized,
+          updatedAt: new Date(),
+        }).where(eq(drivers.id, id));
+
+        console.log(`[UPDATE_DRIVER] Saved changes to pending_changes for driver ID: ${id}`);
+        revalidatePath(`/admin/drivers/${id}`);
+        revalidatePath("/submit-profile");
+        return { success: true, pending: true };
+      }
+    }
+
+    // Direct update (admin, or non-approved driver)
     await db.transaction(async (tx) => {
       // 1. Update main driver profile
-      await tx.update(drivers).set({
+      const updateData: any = {
         ...driverInfo,
         updatedAt: new Date(),
-      }).where(eq(drivers.id, id));
+      };
+      
+      // If a driver updates their own pending/rejected profile, make it pending again
+      if (!admin) {
+        updateData.status = "pending";
+      }
+
+      await tx.update(drivers).set(updateData).where(eq(drivers.id, id));
 
       // 2. Refresh Achievements
       await tx.delete(achievements).where(eq(achievements.driverId, id));
@@ -155,6 +194,7 @@ export async function updateDriver(id: string, data: any) {
     console.log(`[UPDATE_DRIVER] Successfully updated driver ID: ${id}`);
     revalidatePath("/admin/drivers");
     revalidatePath(`/admin/drivers/${id}`);
+    revalidatePath("/submit-profile");
     return { success: true };
   } catch (error: any) {
     console.error("[UPDATE_DRIVER_ERROR]", error);
@@ -202,5 +242,101 @@ export async function rejectDriver(id: string) {
   } catch (error: any) {
     console.error("[REJECT_DRIVER_ERROR]", error);
     return { success: false, error: error?.message || "Failed to reject driver." };
+  }
+}
+
+export async function approvePendingChanges(id: string) {
+  try {
+    const driver = await db.query.drivers.findFirst({
+      where: eq(drivers.id, id),
+    });
+
+    if (!driver || !driver.pendingChanges) {
+      return { success: false, error: "No pending changes found to approve." };
+    }
+
+    const data = JSON.parse(driver.pendingChanges);
+    const { achievements: achievementsData, riderStats: statsData, ...driverInfo } = data;
+
+    await db.transaction(async (tx) => {
+      // 1. Update main driver profile, clear pendingChanges
+      await tx.update(drivers).set({
+        ...driverInfo,
+        pendingChanges: null,
+        updatedAt: new Date(),
+      }).where(eq(drivers.id, id));
+
+      // 2. Refresh Achievements
+      await tx.delete(achievements).where(eq(achievements.driverId, id));
+      if (achievementsData && achievementsData.length > 0) {
+        const achievementsToInsert = achievementsData.map((a: any) => ({
+          id: crypto.randomUUID(),
+          driverId: id,
+          raceName: a.raceName,
+          year: a.year ? (Number(a.year) || null) : null,
+          date: a.date || null,
+          team: a.team || null,
+          position: a.position || null,
+          points: a.points ? (Number(a.points) || 0) : 0,
+          category: a.category || "Formula 1",
+        }));
+        await tx.insert(achievements).values(achievementsToInsert);
+      }
+
+      // 3. Refresh Rider Stats
+      await tx.delete(riderStats).where(eq(riderStats.driverId, id));
+      if (statsData && statsData.length > 0) {
+        const statsToInsert = statsData.map((s: any) => ({
+          id: crypto.randomUUID(),
+          driverId: id,
+          season: s.season ? (Number(s.season) || null) : null,
+          category: s.category || "Formula 1",
+          bike: s.bike || null,
+          starts: Number(s.starts) || 0,
+          poles: Number(s.poles) || 0,
+          firstPos: Number(s.firstPos) || 0,
+          secondPos: Number(s.secondPos) || 0,
+          thirdPos: Number(s.thirdPos) || 0,
+          podiums: Number(s.podiums) || 0,
+          points: Number(s.points) || 0,
+          position: s.position || null,
+          fastestLaps: Number(s.fastestLaps) || 0,
+          dnfs: Number(s.dnfs) || 0,
+          sprintRaces: Number(s.sprintRaces) || 0,
+          sprintPoints: Number(s.sprintPoints) || 0,
+          sprintWins: Number(s.sprintWins) || 0,
+          sprintPodiums: Number(s.sprintPodiums) || 0,
+          sprintPoles: Number(s.sprintPoles) || 0,
+        }));
+        await tx.insert(riderStats).values(statsToInsert);
+      }
+    });
+
+    console.log(`[APPROVE_PENDING_CHANGES] Approved changes for driver ID: ${id}`);
+    revalidatePath("/admin/drivers");
+    revalidatePath(`/admin/drivers/${id}`);
+    revalidatePath("/submit-profile");
+    return { success: true };
+  } catch (error: any) {
+    console.error("[APPROVE_PENDING_CHANGES_ERROR]", error);
+    return { success: false, error: error?.message || "Failed to approve pending changes." };
+  }
+}
+
+export async function rejectPendingChanges(id: string) {
+  try {
+    await db.update(drivers).set({
+      pendingChanges: null,
+      updatedAt: new Date(),
+    }).where(eq(drivers.id, id));
+
+    console.log(`[REJECT_PENDING_CHANGES] Rejected changes for driver ID: ${id}`);
+    revalidatePath("/admin/drivers");
+    revalidatePath(`/admin/drivers/${id}`);
+    revalidatePath("/submit-profile");
+    return { success: true };
+  } catch (error: any) {
+    console.error("[REJECT_PENDING_CHANGES_ERROR]", error);
+    return { success: false, error: error?.message || "Failed to reject pending changes." };
   }
 }
