@@ -10,11 +10,13 @@ async function initializeCategoryTables() {
       \`id\` varchar(191) NOT NULL,
       \`name\` varchar(100) NOT NULL,
       \`slug\` varchar(191) NOT NULL,
+      \`parent_id\` varchar(191) DEFAULT NULL,
       \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
       \`updated_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       CONSTRAINT \`categories_id\` PRIMARY KEY(\`id\`),
       CONSTRAINT \`categories_name_unique\` UNIQUE(\`name\`),
-      CONSTRAINT \`categories_slug_unique\` UNIQUE(\`slug\`)
+      CONSTRAINT \`categories_slug_unique\` UNIQUE(\`slug\`),
+      CONSTRAINT \`fk_categories_parent\` FOREIGN KEY (\`parent_id\`) REFERENCES \`categories\` (\`id\`) ON DELETE SET NULL
     );`,
     `CREATE TABLE IF NOT EXISTS \`blog_categories\` (
       \`blog_id\` varchar(191) NOT NULL,
@@ -48,6 +50,27 @@ async function initializeCategoryTables() {
 
 export async function getCategories() {
   try {
+    // Dynamic Self-Healing: Check and alter categories table to add parent_id if it doesn't exist
+    try {
+      await db.execute(sql`ALTER TABLE \`categories\` ADD COLUMN \`parent_id\` varchar(191) DEFAULT NULL`);
+    } catch (err: any) {
+      const isDuplicateColumnError = 
+        err?.code === "ER_DUP_FIELDNAME" ||
+        err?.cause?.code === "ER_DUP_FIELDNAME" ||
+        err?.errno === 1060 ||
+        err?.cause?.errno === 1060 ||
+        err?.sqlState === "42S21" ||
+        err?.cause?.sqlState === "42S21" ||
+        err?.message?.includes("Duplicate column") ||
+        err?.cause?.message?.includes("Duplicate column") ||
+        err?.message?.includes("already exists") ||
+        err?.cause?.message?.includes("already exists");
+
+      if (!isDuplicateColumnError) {
+        console.error("Migration error adding parent_id column:", err);
+      }
+    }
+
     let allCategories = await db.select().from(categories).orderBy(asc(categories.name));
     if (allCategories.length === 0) {
       console.log("Categories table is empty. Initializing defaults...");
@@ -69,21 +92,22 @@ export async function getCategories() {
     }
     // Return standard mock fallbacks so that the UI never crashes
     return [
-      { id: "cat-f1", name: "Formula 1", slug: "formula-1", createdAt: new Date() },
-      { id: "cat-motogp", name: "MotoGP", slug: "motogp", createdAt: new Date() },
-      { id: "cat-sl", name: "Sri Lanka Racing", slug: "sri-lanka-racing", createdAt: new Date() },
-      { id: "cat-editors", name: "Editor's Pick", slug: "editors-pick", createdAt: new Date() },
+      { id: "cat-f1", name: "Formula 1", slug: "formula-1", parentId: null, createdAt: new Date() },
+      { id: "cat-motogp", name: "MotoGP", slug: "motogp", parentId: null, createdAt: new Date() },
+      { id: "cat-sl", name: "Sri Lanka Racing", slug: "sri-lanka-racing", parentId: null, createdAt: new Date() },
+      { id: "cat-editors", name: "Editor's Pick", slug: "editors-pick", parentId: null, createdAt: new Date() },
     ];
   }
 }
 
-export async function createCategory(data: { name: string; slug: string }) {
+export async function createCategory(data: { name: string; slug: string; parentId?: string | null }) {
   try {
     const id = crypto.randomUUID();
     await db.insert(categories).values({
       id,
       name: data.name,
       slug: data.slug,
+      parentId: data.parentId || null,
     });
 
     revalidatePath("/admin/categories");
@@ -99,6 +123,7 @@ export async function createCategory(data: { name: string; slug: string }) {
           id,
           name: data.name,
           slug: data.slug,
+          parentId: data.parentId || null,
         });
         revalidatePath("/admin/categories");
         return { success: true, category: { id, ...data } };

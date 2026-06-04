@@ -20,6 +20,7 @@ export const categories = mysqlTable("categories", {
   id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: varchar("name", { length: 100 }).notNull().unique(),
   slug: varchar("slug", { length: 191 }).notNull().unique(),
+  parentId: varchar("parent_id", { length: 191 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
 });
@@ -77,6 +78,8 @@ export const drivers = mysqlTable("drivers", {
   careerPoints: varchar("career_points", { length: 50 }),
   careerPoles: int("career_poles"),
   biography: longtext("biography"),
+  userId: varchar("user_id", { length: 191 }),
+  pendingChanges: longtext("pending_changes"),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
@@ -152,10 +155,15 @@ export const circuitFaqs = mysqlTable("circuit_faqs", {
 // RELATIONS
 export const blogsRelations = relations(blogs, ({ many }) => ({
   blogCategories: many(blogCategories),
+  comments: many(comments),
 }));
 
-export const categoriesRelations = relations(categories, ({ many }) => ({
+export const categoriesRelations = relations(categories, ({ many, one }) => ({
   blogCategories: many(blogCategories),
+  parent: one(categories, {
+    fields: [categories.parentId],
+    references: [categories.id],
+  }),
 }));
 
 export const blogCategoriesRelations = relations(blogCategories, ({ one }) => ({
@@ -169,9 +177,13 @@ export const blogCategoriesRelations = relations(blogCategories, ({ one }) => ({
   }),
 }));
 
-export const driversRelations = relations(drivers, ({ many }) => ({
+export const driversRelations = relations(drivers, ({ many, one }) => ({
   achievements: many(achievements),
   riderStats: many(riderStats),
+  user: one(users, {
+    fields: [drivers.userId],
+    references: [users.id],
+  }),
 }));
 
 export const achievementsRelations = relations(achievements, ({ one }) => ({
@@ -209,6 +221,37 @@ export const users = mysqlTable("users", {
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
 });
 
+// COMMENTS TABLE
+export const comments = mysqlTable("comments", {
+  id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  blogId: varchar("blog_id", { length: 191 }).notNull(),
+  userId: varchar("user_id", { length: 191 }).notNull(),
+  content: text("content").notNull(),
+  approved: boolean("approved").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
+});
+
+// COMMENTS RELATIONS
+export const commentsRelations = relations(comments, ({ one }) => ({
+  blog: one(blogs, {
+    fields: [comments.blogId],
+    references: [blogs.id],
+  }),
+  user: one(users, {
+    fields: [comments.userId],
+    references: [users.id],
+  }),
+}));
+
+export const usersRelations = relations(users, ({ many, one }) => ({
+  comments: many(comments),
+  driver: one(drivers, {
+    fields: [users.id],
+    references: [drivers.userId],
+  }),
+}));
+
 export type Blog = typeof blogs.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type BlogCategory = typeof blogCategories.$inferSelect;
@@ -218,3 +261,4 @@ export type RiderStat = typeof riderStats.$inferSelect;
 export type Circuit = typeof circuits.$inferSelect;
 export type CircuitFaq = typeof circuitFaqs.$inferSelect;
 export type User = typeof users.$inferSelect;
+export type Comment = typeof comments.$inferSelect;

@@ -12,7 +12,8 @@ import {
   LogOut,
   Globe,
   Tag,
-  Trophy
+  Trophy,
+  User
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -45,6 +46,11 @@ const NAV_ITEMS = [
     label: "Results & Standings",
     href: "/admin/results",
     icon: Trophy,
+  },
+  {
+    label: "Users",
+    href: "/admin/users",
+    icon: User,
   },
 ];
 

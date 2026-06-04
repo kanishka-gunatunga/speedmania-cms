@@ -59,3 +59,22 @@ export async function verifyToken(token: string): Promise<string | null> {
   } catch (e) {}
   return null;
 }
+
+// Edge-compatible user authentication retriever from request headers
+export async function getAuthUser(request: Request): Promise<{ id: string; username: string } | null> {
+  try {
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
+    const token = authHeader.substring(7);
+    const payload = await verifyToken(token);
+    if (!payload) return null;
+    
+    const [id, username, expiryStr] = payload.split(":");
+    const expiry = parseInt(expiryStr, 10);
+    
+    if (Date.now() > expiry) return null;
+    return { id, username };
+  } catch (e) {
+    return null;
+  }
+}

@@ -11,6 +11,7 @@ export default async function CategoriesPage() {
     id: cat.id,
     name: cat.name,
     slug: cat.slug,
+    parentId: cat.parentId,
     createdAt: cat.createdAt,
   }));
 

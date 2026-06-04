@@ -300,6 +300,17 @@ export async function GET() {
         \`blog_id\` varchar(191) NOT NULL,
         \`category_id\` varchar(191) NOT NULL,
         CONSTRAINT \`blog_categories_pk\` PRIMARY KEY(\`blog_id\`, \`category_id\`)
+      );`,
+
+      `CREATE TABLE IF NOT EXISTS \`comments\` (
+        \`id\` varchar(191) NOT NULL,
+        \`blog_id\` varchar(191) NOT NULL,
+        \`user_id\` varchar(191) NOT NULL,
+        \`content\` text NOT NULL,
+        \`approved\` boolean NOT NULL DEFAULT false,
+        \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        \`updated_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT \`comments_id\` PRIMARY KEY(\`id\`)
       );`
     ];
 

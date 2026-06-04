@@ -19,6 +19,7 @@ interface Category {
   id: string;
   name: string;
   slug: string;
+  parentId?: string | null;
   createdAt: Date;
 }
 
@@ -30,6 +31,7 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
   const [categoriesList, setCategoriesList] = useState<Category[]>(initialCategories);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [parentId, setParentId] = useState("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -57,7 +59,7 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
     }
 
     startTransition(async () => {
-      const result = await createCategory({ name, slug });
+      const result = await createCategory({ name, slug, parentId: parentId || null });
       if (result.success && result.category) {
         setCategoriesList((prev) => [
           ...prev,
@@ -65,11 +67,13 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
             id: result.category!.id,
             name: result.category!.name,
             slug: result.category!.slug,
+            parentId: result.category!.parentId || null,
             createdAt: new Date(),
           },
         ].sort((a, b) => a.name.localeCompare(b.name)));
         setName("");
         setSlug("");
+        setParentId("");
       } else {
         setError(result.error || "Failed to create category");
       }
@@ -77,12 +81,16 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
   };
 
   const handleDeleteCategory = (id: string) => {
-    if (!confirm("Are you sure you want to delete this category? This will remove it from all assigned blog posts.")) return;
+    if (!confirm("Are you sure you want to delete this category? This will remove it from all assigned blog posts. Any child sub-categories will be unlinked.")) return;
 
     startTransition(async () => {
       const result = await deleteCategory(id);
       if (result.success) {
-        setCategoriesList((prev) => prev.filter((c) => c.id !== id));
+        setCategoriesList((prev) => 
+          prev
+            .filter((c) => c.id !== id)
+            .map((c) => (c.parentId === id ? { ...c, parentId: null } : c))
+        );
       } else {
         setError(result.error || "Failed to delete category");
       }
@@ -131,6 +139,27 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
                 disabled={isPending}
               />
             </div>
+            <div className="space-y-2">
+              <label htmlFor="cat-parent" className="text-sm font-semibold">
+                Parent Category (Optional)
+              </label>
+              <select
+                id="cat-parent"
+                value={parentId}
+                onChange={(e) => setParentId(e.target.value)}
+                disabled={isPending}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">None (Top-Level Category)</option>
+                {categoriesList
+                  .filter((c) => !c.parentId)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
             <Button
               className="w-full gap-2 mt-2"
               onClick={handleAddCategory}
@@ -170,27 +199,41 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    categoriesList.map((category) => (
-                      <TableRow key={category.id} className="hover:bg-muted/20">
-                        <TableCell className="font-semibold">{category.name}</TableCell>
-                        <TableCell>
-                          <code className="text-xs px-2 py-1 bg-muted rounded">
-                            {category.slug}
-                          </code>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => handleDeleteCategory(category.id)}
-                            disabled={isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                    categoriesList.map((category) => {
+                      const parent = category.parentId
+                        ? categoriesList.find((c) => c.id === category.parentId)
+                        : null;
+                      return (
+                        <TableRow key={category.id} className="hover:bg-muted/20">
+                          <TableCell className="font-semibold">
+                            {parent ? (
+                              <span className="flex items-center gap-1.5">
+                                <span className="text-muted-foreground font-normal text-xs">{parent.name} &gt;</span>
+                                <span>{category.name}</span>
+                              </span>
+                            ) : (
+                              category.name
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <code className="text-xs px-2 py-1 bg-muted rounded">
+                              {category.slug}
+                            </code>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => handleDeleteCategory(category.id)}
+                              disabled={isPending}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>
