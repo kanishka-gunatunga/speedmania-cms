@@ -13,7 +13,8 @@ import {
   Globe,
   Tag,
   Trophy,
-  User
+  User,
+  Shield
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -31,6 +32,11 @@ const NAV_ITEMS = [
     label: "Categories",
     href: "/admin/categories",
     icon: Tag,
+  },
+  {
+    label: "Teams",
+    href: "/admin/teams",
+    icon: Shield,
   },
   {
     label: "Drivers",

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
-import { circuits, circuitFaqs, drivers, riderStats, achievements, blogs, categories, blogCategories } from "@/lib/db/schema";
+import { circuits, circuitFaqs, drivers, riderStats, achievements, blogs, categories, blogCategories, teams } from "@/lib/db/schema";
 
 const MOCK_CIRCUITS = [
   {
@@ -311,6 +311,44 @@ export async function GET() {
         \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
         \`updated_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         CONSTRAINT \`comments_id\` PRIMARY KEY(\`id\`)
+      );`,
+
+      `CREATE TABLE IF NOT EXISTS \`teams\` (
+        \`id\` varchar(191) NOT NULL,
+        \`name\` varchar(255) NOT NULL,
+        \`subtitle\` varchar(255),
+        \`slug\` varchar(191) NOT NULL,
+        \`category\` varchar(100) NOT NULL,
+        \`logo\` text,
+        \`initials\` varchar(10),
+        \`gradient\` text,
+        \`text_color\` varchar(50) DEFAULT 'text-white',
+        \`accent_color\` varchar(50),
+        \`member_card_bg\` varchar(50),
+        \`glow_color\` varchar(50),
+        \`biography\` longtext,
+        \`profile_image\` text,
+        \`season_position\` varchar(50),
+        \`season_points\` int,
+        \`races\` int,
+        \`wins\` int,
+        \`fastest_laps\` int,
+        \`podiums\` int,
+        \`sprint_races\` int,
+        \`sprint_points\` int,
+        \`sprint_wins\` int,
+        \`sprint_podiums\` int,
+        \`summary_entered\` int,
+        \`summary_wins\` varchar(50),
+        \`highest_finish\` varchar(100),
+        \`summary_podiums\` int,
+        \`summary_poles\` int,
+        \`summary_championships\` int,
+        \`roster\` longtext,
+        \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        \`updated_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`teams_slug_unique\` (\`slug\`)
       );`
     ];
 
@@ -324,6 +362,7 @@ export async function GET() {
       await db.execute(sql.raw("ALTER TABLE `drivers` ADD COLUMN IF NOT EXISTS `career_points` varchar(50);"));
       await db.execute(sql.raw("ALTER TABLE `drivers` ADD COLUMN IF NOT EXISTS `career_poles` int;"));
       await db.execute(sql.raw("ALTER TABLE `drivers` ADD COLUMN IF NOT EXISTS `biography` longtext;"));
+      await db.execute(sql.raw("ALTER TABLE `drivers` ADD COLUMN IF NOT EXISTS `team_id` varchar(191) NULL;"));
       steps.push("Database schema migrations executed successfully!");
     } catch (migErr) {
       console.warn("Migration warning (might be already applied or unsupported syntax):", migErr);
