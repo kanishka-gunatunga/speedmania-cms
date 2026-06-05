@@ -241,7 +241,8 @@ export function BlogForm({ initialData, categories = [] }: BlogFormProps) {
                                 if (checked) {
                                   field.onChange([...value, parent.id]);
                                 } else {
-                                  field.onChange(value.filter((val) => val !== parent.id));
+                                  const childIds = children.map((c) => c.id);
+                                  field.onChange(value.filter((val) => val !== parent.id && !childIds.includes(val)));
                                 }
                               }}
                             />
