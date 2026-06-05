@@ -34,8 +34,8 @@ const formSchema = z.object({
   }).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
     message: "Slug must be lowercase alphanumeric and can contain hyphens.",
   }),
-  content: z.string().min(10, {
-    message: "Content must be at least 10 characters.",
+  content: z.string().min(100, {
+    message: "Content must be at least 100 characters.",
   }),
   excerpt: z.string().optional(),
   featuredImage: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal("")),
