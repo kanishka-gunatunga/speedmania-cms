@@ -80,6 +80,7 @@ export const drivers = mysqlTable("drivers", {
   biography: longtext("biography"),
   userId: varchar("user_id", { length: 191 }),
   pendingChanges: longtext("pending_changes"),
+  teamId: varchar("team_id", { length: 191 }),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
@@ -184,6 +185,10 @@ export const driversRelations = relations(drivers, ({ many, one }) => ({
     fields: [drivers.userId],
     references: [users.id],
   }),
+  team: one(teams, {
+    fields: [drivers.teamId],
+    references: [teams.id],
+  }),
 }));
 
 export const achievementsRelations = relations(achievements, ({ one }) => ({
@@ -209,6 +214,54 @@ export const circuitFaqsRelations = relations(circuitFaqs, ({ one }) => ({
     fields: [circuitFaqs.circuitId],
     references: [circuits.id],
   }),
+}));
+
+// TEAMS TABLE
+export const teams = mysqlTable("teams", {
+  id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: varchar("name", { length: 255 }).notNull(),
+  subtitle: varchar("subtitle", { length: 255 }),
+  slug: varchar("slug", { length: 191 }).notNull().unique(),
+  category: varchar("category", { length: 100 }).notNull(), // e.g. "Formula 1" | "Rally" | "Supercars" | "Karting"
+  logo: text("logo"), // image URL or "shield"
+  initials: varchar("initials", { length: 10 }),
+  gradient: text("gradient"),
+  textColor: varchar("text_color", { length: 50 }).default("text-white"),
+  accentColor: varchar("accent_color", { length: 50 }),
+  memberCardBg: varchar("member_card_bg", { length: 50 }),
+  glowColor: varchar("glow_color", { length: 50 }),
+  biography: longtext("biography"),
+  profileImage: text("profile_image"),
+  
+  // Season Stats (2026 Season)
+  seasonPosition: varchar("season_position", { length: 50 }),
+  seasonPoints: int("season_points"),
+  races: int("races"),
+  wins: int("wins"),
+  fastestLaps: int("fastest_laps"),
+  podiums: int("podiums"),
+  sprintRaces: int("sprint_races"),
+  sprintPoints: int("sprint_points"),
+  sprintWins: int("sprint_wins"),
+  sprintPodiums: int("sprint_podiums"),
+  
+  // Team Summary (All Time)
+  summaryEntered: int("summary_entered"),
+  summaryWins: varchar("summary_wins", { length: 50 }),
+  highestFinish: varchar("highest_finish", { length: 100 }),
+  summaryPodiums: int("summary_podiums"),
+  summaryPoles: int("summary_poles"),
+  summaryChampionships: int("summary_championships"),
+  
+  // Custom Roster (JSON stringified)
+  roster: longtext("roster"),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
+});
+
+export const teamsRelations = relations(teams, ({ many }) => ({
+  drivers: many(drivers),
 }));
 
 // USERS TABLE
@@ -262,3 +315,4 @@ export type Circuit = typeof circuits.$inferSelect;
 export type CircuitFaq = typeof circuitFaqs.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
+export type Team = typeof teams.$inferSelect;
