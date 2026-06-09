@@ -29,6 +29,7 @@ export function ImageUploadField({
   const [activeTab, setActiveTab] = useState<"url" | "upload">(initialTab);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Synchronize tab if value changes externally (e.g. form reset or default values loading)
   useEffect(() => {
@@ -46,10 +47,7 @@ export function ImageUploadField({
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const uploadFile = async (file: File) => {
     // Validate file is an image
     if (!file.type.startsWith("image/")) {
       setError("Please select a valid image file.");
@@ -87,6 +85,43 @@ export function ImageUploadField({
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!uploading) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (uploading) return;
+
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    await uploadFile(file);
   };
 
   const handleRemoveImage = () => {
@@ -192,10 +227,16 @@ export function ImageUploadField({
           ) : (
             /* Drag and Drop Dropzone State */
             <label
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
               className={cn(
                 "relative flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl transition-all cursor-pointer bg-muted/5 select-none hover:bg-muted/10 group",
                 uploading
                   ? "border-primary/50 cursor-not-allowed pointer-events-none"
+                  : isDragging
+                  ? "border-primary bg-primary/10 scale-[1.01]"
                   : "border-border/60 hover:border-primary/50"
               )}
             >
