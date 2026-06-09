@@ -44,6 +44,20 @@ export async function getBlogById(id: string) {
   }
 }
 
+async function generateUniqueSlug(baseSlug: string, currentId?: string): Promise<string> {
+  const base = baseSlug.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') || "post";
+  let slug = base;
+  let counter = 1;
+  while (true) {
+    const existing = await db.select().from(blogs).where(eq(blogs.slug, slug)).limit(1);
+    if (existing.length === 0 || (currentId && existing[0].id === currentId)) {
+      return slug;
+    }
+    slug = `${base}-${counter}`;
+    counter++;
+  }
+}
+
 export async function createBlog(data: {
   title: string;
   slug: string;
@@ -57,6 +71,10 @@ export async function createBlog(data: {
   try {
     const id = crypto.randomUUID();
     const { categoryIds, ...blogData } = data;
+
+    const slug = await generateUniqueSlug(blogData.slug || blogData.title || "post");
+    blogData.slug = slug;
+
     await db.insert(blogs).values({
       id,
       ...blogData,
@@ -78,9 +96,15 @@ export async function createBlog(data: {
     return { success: true, blog: { id, ...data } };
   } catch (error: any) {
     console.error("Error creating blog:", error);
+    if (error?.message?.includes("Duplicate entry") || error?.code === "ER_DUP_ENTRY") {
+      if (error.message.includes("slug")) {
+        return { success: false, error: "A blog post with this slug already exists. Please choose a different title or customize the slug." };
+      }
+      return { success: false, error: "A duplicate record was found. Please make sure all unique fields (like slug) are distinct." };
+    }
     return { 
       success: false, 
-      error: error?.message || "Failed to create blog. Slug might not be unique." 
+      error: error?.message || "Failed to create blog." 
     };
   }
 }
@@ -97,6 +121,9 @@ export async function updateBlog(id: string, data: {
 }) {
   try {
     const { categoryIds, ...blogData } = data;
+
+    const slug = await generateUniqueSlug(blogData.slug || blogData.title || "post", id);
+    blogData.slug = slug;
     await db.update(blogs).set({
       ...blogData,
       featuredImage: blogData.featuredImage || null,
@@ -119,9 +146,15 @@ export async function updateBlog(id: string, data: {
     revalidatePath("/admin/blogs");
     revalidatePath(`/admin/blogs/${id}`);
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating blog:", error);
-    return { success: false, error: "Failed to update blog." };
+    if (error?.message?.includes("Duplicate entry") || error?.code === "ER_DUP_ENTRY") {
+      if (error.message.includes("slug")) {
+        return { success: false, error: "A blog post with this slug already exists. Please choose a different title or customize the slug." };
+      }
+      return { success: false, error: "A duplicate record was found. Please make sure all unique fields (like slug) are distinct." };
+    }
+    return { success: false, error: error?.message || "Failed to update blog." };
   }
 }
 
