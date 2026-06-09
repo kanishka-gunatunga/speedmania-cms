@@ -136,7 +136,7 @@ export function ImageUploadField({
             onChange={(e) => onChange(e.target.value)}
             className="w-full bg-background border border-border rounded-lg text-sm transition-all focus:ring-2 focus:ring-primary/20"
           />
-          {value && !isUploadedUrl(value) && (
+          {value && !isUploadedUrl(value) && (value.startsWith("http://") || value.startsWith("https://") || value.startsWith("/") || value.startsWith("data:")) && (
             <div className="relative mt-2 border border-border/60 rounded-xl overflow-hidden bg-muted/20 w-fit max-w-[200px] h-[120px] shadow-sm flex items-center justify-center group animate-in fade-in zoom-in-95">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

@@ -4,7 +4,7 @@ import { useForm, useFieldArray, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
-import { useTransition, useState } from "react";
+import { useTransition, useState, useEffect } from "react";
 import { Plus, Trash2, Shield, BarChart3, Users, HelpCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -88,8 +88,8 @@ export function TeamForm({ initialData, availableDrivers }: TeamFormProps) {
   let initialRoster = [];
   if (initialData?.roster) {
     try {
-      initialRoster = typeof initialData.roster === "string" 
-        ? JSON.parse(initialData.roster) 
+      initialRoster = typeof initialData.roster === "string"
+        ? JSON.parse(initialData.roster)
         : initialData.roster;
     } catch (e) {
       console.error("Failed to parse custom roster", e);
@@ -98,6 +98,7 @@ export function TeamForm({ initialData, availableDrivers }: TeamFormProps) {
 
   const form = useForm<TeamFormValues>({
     resolver: zodResolver(formSchema) as any,
+    mode: "onChange",
     defaultValues: {
       name: initialData?.name ?? "",
       slug: initialData?.slug ?? "",
@@ -112,7 +113,7 @@ export function TeamForm({ initialData, availableDrivers }: TeamFormProps) {
       glowColor: initialData?.glowColor ?? "",
       biography: initialData?.biography ?? "",
       profileImage: initialData?.profileImage ?? "",
-      
+
       // Season Stats
       seasonPosition: initialData?.seasonPosition ?? "",
       seasonPoints: initialData?.seasonPoints ?? 0,
@@ -124,7 +125,7 @@ export function TeamForm({ initialData, availableDrivers }: TeamFormProps) {
       sprintPoints: initialData?.sprintPoints ?? 0,
       sprintWins: initialData?.sprintWins ?? 0,
       sprintPodiums: initialData?.sprintPodiums ?? 0,
-      
+
       // Summary Stats
       summaryEntered: initialData?.summaryEntered ?? 0,
       summaryWins: initialData?.summaryWins ?? "0",
@@ -132,10 +133,10 @@ export function TeamForm({ initialData, availableDrivers }: TeamFormProps) {
       summaryPodiums: initialData?.summaryPodiums ?? 0,
       summaryPoles: initialData?.summaryPoles ?? 0,
       summaryChampionships: initialData?.summaryChampionships ?? 0,
-      
+
       // Driver IDs
       driverIds: initialData?.drivers?.map((d: any) => d.id) ?? [],
-      
+
       // Custom Roster
       roster: initialRoster,
     },
@@ -145,6 +146,11 @@ export function TeamForm({ initialData, availableDrivers }: TeamFormProps) {
     control: form.control,
     name: "roster",
   });
+
+  // Trigger initial validation on mount for both create and update
+  useEffect(() => {
+    form.trigger();
+  }, [form]);
 
   const onSubmit: SubmitHandler<TeamFormValues> = (data) => {
     setError(null);
@@ -195,7 +201,7 @@ export function TeamForm({ initialData, availableDrivers }: TeamFormProps) {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Team Name</FormLabel>
+                      <FormLabel>Team Name <span className="text-destructive">*</span></FormLabel>
                       <FormControl>
                         <Input placeholder="E.g. Mora Racing" {...field} onChange={(e) => {
                           field.onChange(e);
@@ -213,7 +219,7 @@ export function TeamForm({ initialData, availableDrivers }: TeamFormProps) {
                   name="slug"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Slug</FormLabel>
+                      <FormLabel>Slug <span className="text-destructive">*</span></FormLabel>
                       <FormControl>
                         <Input placeholder="mora-racing" {...field} />
                       </FormControl>
@@ -239,9 +245,9 @@ export function TeamForm({ initialData, availableDrivers }: TeamFormProps) {
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel>Category <span className="text-destructive">*</span></FormLabel>
                       <FormControl>
-                        <select 
+                        <select
                           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           {...field}
                         >
@@ -262,10 +268,7 @@ export function TeamForm({ initialData, availableDrivers }: TeamFormProps) {
                     <FormItem>
                       <FormLabel>Logo (URL, Upload or "shield")</FormLabel>
                       <FormControl>
-                        <div className="flex gap-2">
-                          <Input placeholder="/mora-logo.png or 'shield'" className="flex-1" {...field} />
-                          <ImageUploadField value={field.value !== "shield" ? field.value : ""} onChange={(val) => field.onChange(val)} />
-                        </div>
+                        <ImageUploadField value={field.value} onChange={field.onChange} placeholder="/mora-logo.png or 'shield'" />
                       </FormControl>
                       <FormDescription>
                         Use "shield" to render the SVG shield layout with initials on frontend, or provide an image path.
@@ -706,7 +709,7 @@ export function TeamForm({ initialData, availableDrivers }: TeamFormProps) {
                       name={`roster.${index}.name`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Staff Name</FormLabel>
+                          <FormLabel>Staff Name <span className="text-destructive">*</span></FormLabel>
                           <FormControl>
                             <Input placeholder="e.g. Toto Wolff" {...field} />
                           </FormControl>
@@ -719,7 +722,7 @@ export function TeamForm({ initialData, availableDrivers }: TeamFormProps) {
                       name={`roster.${index}.role`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Staff Role</FormLabel>
+                          <FormLabel>Staff Role <span className="text-destructive">*</span></FormLabel>
                           <FormControl>
                             <Input placeholder="e.g. Team Principal" {...field} />
                           </FormControl>
