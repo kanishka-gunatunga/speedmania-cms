@@ -29,6 +29,20 @@ export async function getCircuitById(id: string) {
   }
 }
 
+async function generateUniqueSlug(baseSlug: string, currentId?: string): Promise<string> {
+  const base = baseSlug.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') || "circuit";
+  let slug = base;
+  let counter = 1;
+  while (true) {
+    const existing = await db.select().from(circuits).where(eq(circuits.slug, slug)).limit(1);
+    if (existing.length === 0 || (currentId && existing[0].id === currentId)) {
+      return slug;
+    }
+    slug = `${base}-${counter}`;
+    counter++;
+  }
+}
+
 export async function createCircuit(data: {
   name: string;
   slug: string;
@@ -48,6 +62,9 @@ export async function createCircuit(data: {
   try {
     const id = crypto.randomUUID();
     const { faqs: faqsData, ...circuitInfo } = data;
+
+    const slug = await generateUniqueSlug(circuitInfo.slug || circuitInfo.name || "circuit");
+    circuitInfo.slug = slug;
 
     await db.transaction(async (tx) => {
       await tx.insert(circuits).values({
@@ -70,6 +87,12 @@ export async function createCircuit(data: {
     return { success: true, id };
   } catch (error: any) {
     console.error("Error creating circuit:", error);
+    if (error?.message?.includes("Duplicate entry") || error?.code === "ER_DUP_ENTRY") {
+      if (error.message.includes("slug")) {
+        return { success: false, error: "A circuit with this slug already exists. Please choose a different circuit name or customize the slug." };
+      }
+      return { success: false, error: "A duplicate record was found. Please make sure all unique fields (like slug) are distinct." };
+    }
     return { success: false, error: error?.message || "Failed to create circuit." };
   }
 }
@@ -92,6 +115,9 @@ export async function updateCircuit(id: string, data: {
 }) {
   try {
     const { faqs: faqsData, ...circuitInfo } = data;
+
+    const slug = await generateUniqueSlug(circuitInfo.slug || circuitInfo.name || "circuit", id);
+    circuitInfo.slug = slug;
 
     await db.transaction(async (tx) => {
       await tx.update(circuits).set({
@@ -118,6 +144,12 @@ export async function updateCircuit(id: string, data: {
     return { success: true };
   } catch (error: any) {
     console.error("Error updating circuit:", error);
+    if (error?.message?.includes("Duplicate entry") || error?.code === "ER_DUP_ENTRY") {
+      if (error.message.includes("slug")) {
+        return { success: false, error: "A circuit with this slug already exists. Please choose a different circuit name or customize the slug." };
+      }
+      return { success: false, error: "A duplicate record was found. Please make sure all unique fields (like slug) are distinct." };
+    }
     return { success: false, error: error?.message || "Failed to update circuit." };
   }
 }

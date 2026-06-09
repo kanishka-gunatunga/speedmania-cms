@@ -29,10 +29,27 @@ export async function getTeamById(idOrSlug: string) {
   }
 }
 
+async function generateUniqueSlug(baseSlug: string, currentId?: string): Promise<string> {
+  const base = baseSlug.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') || "team";
+  let slug = base;
+  let counter = 1;
+  while (true) {
+    const existing = await db.select().from(teams).where(eq(teams.slug, slug)).limit(1);
+    if (existing.length === 0 || (currentId && existing[0].id === currentId)) {
+      return slug;
+    }
+    slug = `${base}-${counter}`;
+    counter++;
+  }
+}
+
 export async function createTeam(data: any) {
   try {
     const id = crypto.randomUUID();
     const { driverIds, roster, ...teamInfo } = data;
+
+    const slug = await generateUniqueSlug(teamInfo.slug || teamInfo.name || "team");
+    teamInfo.slug = slug;
 
     await db.transaction(async (tx) => {
       // 1. Insert main team profile
@@ -56,6 +73,12 @@ export async function createTeam(data: any) {
     return { success: true, id };
   } catch (error: any) {
     console.error("[CREATE_TEAM_ERROR]", error);
+    if (error?.message?.includes("Duplicate entry") || error?.code === "ER_DUP_ENTRY") {
+      if (error.message.includes("slug")) {
+        return { success: false, error: "A team with this slug already exists. Please choose a different team name or customize the slug." };
+      }
+      return { success: false, error: "A duplicate record was found. Please make sure all unique fields (like slug) are distinct." };
+    }
     return { success: false, error: error?.message || "Failed to create team profile." };
   }
 }
@@ -63,6 +86,9 @@ export async function createTeam(data: any) {
 export async function updateTeam(id: string, data: any) {
   try {
     const { driverIds, roster, ...teamInfo } = data;
+
+    const slug = await generateUniqueSlug(teamInfo.slug || teamInfo.name || "team", id);
+    teamInfo.slug = slug;
 
     await db.transaction(async (tx) => {
       // 1. Update main team profile
@@ -98,6 +124,12 @@ export async function updateTeam(id: string, data: any) {
     return { success: true };
   } catch (error: any) {
     console.error("[UPDATE_TEAM_ERROR]", error);
+    if (error?.message?.includes("Duplicate entry") || error?.code === "ER_DUP_ENTRY") {
+      if (error.message.includes("slug")) {
+        return { success: false, error: "A team with this slug already exists. Please choose a different team name or customize the slug." };
+      }
+      return { success: false, error: "A duplicate record was found. Please make sure all unique fields (like slug) are distinct." };
+    }
     return { success: false, error: error?.message || "Failed to update team profile." };
   }
 }

@@ -31,11 +31,28 @@ export async function getDriverById(id: string) {
   }
 }
 
+async function generateUniqueSlug(baseSlug: string, currentId?: string): Promise<string> {
+  const base = baseSlug.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') || "athlete";
+  let slug = base;
+  let counter = 1;
+  while (true) {
+    const existing = await db.select().from(drivers).where(eq(drivers.slug, slug)).limit(1);
+    if (existing.length === 0 || (currentId && existing[0].id === currentId)) {
+      return slug;
+    }
+    slug = `${base}-${counter}`;
+    counter++;
+  }
+}
+
 export async function createDriver(data: any) {
   try {
     const user = await getCurrentUser();
     const id = crypto.randomUUID();
     const { achievements: achievementsData, riderStats: statsData, ...driverInfo } = data;
+
+    const slug = await generateUniqueSlug(driverInfo.slug || driverInfo.fullName || "athlete");
+    driverInfo.slug = slug;
 
     await db.transaction(async (tx) => {
       // 1. Insert main driver profile
@@ -94,6 +111,12 @@ export async function createDriver(data: any) {
     return { success: true, id };
   } catch (error: any) {
     console.error("[CREATE_DRIVER_ERROR]", error);
+    if (error?.message?.includes("Duplicate entry") || error?.code === "ER_DUP_ENTRY") {
+      if (error.message.includes("slug")) {
+        return { success: false, error: "An athlete profile with this slug already exists. Please choose a different full name or customize the slug." };
+      }
+      return { success: false, error: "A duplicate record was found. Please make sure all unique fields (like slug) are distinct." };
+    }
     return { success: false, error: error?.message || "Failed to create driver profile." };
   }
 }
@@ -103,6 +126,9 @@ export async function updateDriver(id: string, data: any) {
     console.log(`[UPDATE_DRIVER] Starting update for ID: ${id}`);
     const admin = await getCurrentAdmin();
     const { achievements: achievementsData, riderStats: statsData, ...driverInfo } = data;
+
+    const slug = await generateUniqueSlug(driverInfo.slug || driverInfo.fullName || "athlete", id);
+    driverInfo.slug = slug;
 
     // Check if driver has "approved" status and this is updated by a non-admin (a driver user)
     if (!admin) {
@@ -198,6 +224,12 @@ export async function updateDriver(id: string, data: any) {
     return { success: true };
   } catch (error: any) {
     console.error("[UPDATE_DRIVER_ERROR]", error);
+    if (error?.message?.includes("Duplicate entry") || error?.code === "ER_DUP_ENTRY") {
+      if (error.message.includes("slug")) {
+        return { success: false, error: "An athlete profile with this slug already exists. Please choose a different full name or customize the slug." };
+      }
+      return { success: false, error: "A duplicate record was found. Please make sure all unique fields (like slug) are distinct." };
+    }
     return { success: false, error: error?.message || "Failed to update driver profile." };
   }
 }
