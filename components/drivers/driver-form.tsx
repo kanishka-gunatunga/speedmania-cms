@@ -4,7 +4,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
-import { useTransition, useState } from "react";
+import { useTransition, useState, useEffect } from "react";
 import { Plus, Trash2, ChevronRight, ChevronLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -169,6 +169,22 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<{ id: string; name: string; slug: string; type: string }[]>([]);
+
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch("/api/categories");
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data);
+        }
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+      }
+    }
+    fetchCategories();
+  }, []);
 
   const form = useForm<DriverFormValues>({
     resolver: zodResolver(formSchema) as any,
@@ -209,6 +225,20 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
       biography: initialData?.biography || "",
     },
   });
+
+  const playerType = form.watch("playerType") || "driver";
+  const filteredCategories = categories.filter((c) => c.type === playerType);
+
+  // Reset racingCategory if it does not match the active categories for the selected playerType
+  useEffect(() => {
+    if (categories.length > 0) {
+      const currentCategory = form.getValues("racingCategory");
+      const isValid = filteredCategories.some(c => c.name === currentCategory);
+      if (currentCategory && !isValid) {
+        form.setValue("racingCategory", "");
+      }
+    }
+  }, [playerType, categories]);
 
   const countryValue = form.watch("country") || "";
   const flagCodeValue = form.watch("flagCode") || "";
@@ -550,7 +580,21 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                     <FormItem>
                       <FormLabel>Racing Category</FormLabel>
                       <FormControl>
-                        <Input placeholder="Circuit / Karting / Supercross" {...field} />
+                        {filteredCategories.length > 0 ? (
+                          <select
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            {...field}
+                          >
+                            <option value="">Select Category...</option>
+                            {filteredCategories.map((c) => (
+                              <option key={c.id} value={c.name}>
+                                {c.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <Input placeholder="Circuit / Karting / Supercross" {...field} />
+                        )}
                       </FormControl>
                       <FormMessage />
                     </FormItem>

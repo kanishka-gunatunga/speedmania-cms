@@ -20,14 +20,16 @@ interface Category {
   name: string;
   slug: string;
   parentId?: string | null;
+  type?: string;
   createdAt: Date;
 }
 
 interface CategoryManagerProps {
   initialCategories: Category[];
+  type?: "blog" | "driver" | "rider";
 }
 
-export function CategoryManager({ initialCategories }: CategoryManagerProps) {
+export function CategoryManager({ initialCategories, type = "blog" }: CategoryManagerProps) {
   const [categoriesList, setCategoriesList] = useState<Category[]>(initialCategories);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -59,7 +61,7 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
     }
 
     startTransition(async () => {
-      const result = await createCategory({ name, slug, parentId: parentId || null });
+      const result = await createCategory({ name, slug, parentId: parentId || null, type });
       if (result.success && result.category) {
         setCategoriesList((prev) => [
           ...prev,
@@ -68,6 +70,7 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
             name: result.category!.name,
             slug: result.category!.slug,
             parentId: result.category!.parentId || null,
+            type: type,
             createdAt: new Date(),
           },
         ].sort((a, b) => a.name.localeCompare(b.name)));
@@ -152,7 +155,7 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
               >
                 <option value="">None (Top-Level Category)</option>
                 {categoriesList
-                  .filter((c) => !c.parentId)
+                  .filter((c) => !c.parentId && (!c.type || c.type === type))
                   .map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}

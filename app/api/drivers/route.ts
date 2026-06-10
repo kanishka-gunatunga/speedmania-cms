@@ -9,11 +9,19 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type");
     const season = parseInt(searchParams.get("season") || "2026");
-    const category = searchParams.get("category") || "Formula 1";
+    
+    let category = searchParams.get("category");
+    if (!category) {
+      category = type === "rider" ? "MotoGP" : "Formula 1";
+    }
 
     const whereConditions = [eq(drivers.status, "approved")];
     if (type === "driver" || type === "rider") {
       whereConditions.push(eq(drivers.playerType, type));
+    }
+
+    if (category) {
+      whereConditions.push(eq(drivers.racingCategory, category));
     }
 
     const data = await db
