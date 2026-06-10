@@ -5,8 +5,8 @@ import Link from "next/link";
 
 export default function SubmitSuccessPage() {
   return (
-    <div className="w-full max-w-md mx-auto p-4 min-h-screen flex items-center justify-center bg-black">
-      <Card className="w-full border-zinc-900 bg-zinc-950/60 shadow-2xl text-center py-12 px-6">
+    <div className="w-full min-h-screen flex items-center justify-center bg-black p-4">
+      <Card className="w-full max-w-md border-zinc-900 bg-zinc-950/60 shadow-2xl text-center py-12 px-6">
         <CardHeader className="pb-4">
           <div className="flex justify-center mb-6">
             <CheckCircle2 className="w-16 h-16 text-blue-500" />

@@ -29,8 +29,18 @@ const NAV_ITEMS = [
     icon: FileText,
   },
   {
-    label: "Categories",
+    label: "Blog Categories",
     href: "/admin/categories",
+    icon: Tag,
+  },
+  {
+    label: "Driver Categories",
+    href: "/admin/driver-categories",
+    icon: Tag,
+  },
+  {
+    label: "Rider Categories",
+    href: "/admin/rider-categories",
     icon: Tag,
   },
   {

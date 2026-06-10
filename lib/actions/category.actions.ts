@@ -11,6 +11,7 @@ async function initializeCategoryTables() {
       \`name\` varchar(100) NOT NULL,
       \`slug\` varchar(191) NOT NULL,
       \`parent_id\` varchar(191) DEFAULT NULL,
+      \`type\` varchar(50) NOT NULL DEFAULT 'blog',
       \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
       \`updated_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       CONSTRAINT \`categories_id\` PRIMARY KEY(\`id\`),
@@ -41,6 +42,7 @@ async function initializeCategoryTables() {
         id: cat.id,
         name: cat.name,
         slug: cat.slug,
+        type: "blog",
       }).onDuplicateKeyUpdate({ set: { name: cat.name } });
     } catch (e) {
       console.error("Failed to seed fallback category during self-healing:", e);
@@ -48,7 +50,7 @@ async function initializeCategoryTables() {
   }
 }
 
-export async function getCategories() {
+export async function getCategories(type?: string) {
   try {
     // Dynamic Self-Healing: Check and alter categories table to add parent_id if it doesn't exist
     try {
@@ -71,11 +73,42 @@ export async function getCategories() {
       }
     }
 
-    let allCategories = await db.select().from(categories).orderBy(asc(categories.name));
+    // Dynamic Self-Healing: Check and alter categories table to add type if it doesn't exist
+    try {
+      await db.execute(sql`ALTER TABLE \`categories\` ADD COLUMN \`type\` varchar(50) NOT NULL DEFAULT 'blog'`);
+    } catch (err: any) {
+      const isDuplicateColumnError = 
+        err?.code === "ER_DUP_FIELDNAME" ||
+        err?.cause?.code === "ER_DUP_FIELDNAME" ||
+        err?.errno === 1060 ||
+        err?.cause?.errno === 1060 ||
+        err?.sqlState === "42S21" ||
+        err?.cause?.sqlState === "42S21" ||
+        err?.message?.includes("Duplicate column") ||
+        err?.cause?.message?.includes("Duplicate column") ||
+        err?.message?.includes("already exists") ||
+        err?.cause?.message?.includes("already exists");
+
+      if (!isDuplicateColumnError) {
+        console.error("Migration error adding type column:", err);
+      }
+    }
+
+    let allCategories;
+    if (type) {
+      allCategories = await db.select().from(categories).where(eq(categories.type, type)).orderBy(asc(categories.name));
+    } else {
+      allCategories = await db.select().from(categories).orderBy(asc(categories.name));
+    }
+
     if (allCategories.length === 0) {
       console.log("Categories table is empty. Initializing defaults...");
       await initializeCategoryTables();
-      allCategories = await db.select().from(categories).orderBy(asc(categories.name));
+      if (type) {
+        allCategories = await db.select().from(categories).where(eq(categories.type, type)).orderBy(asc(categories.name));
+      } else {
+        allCategories = await db.select().from(categories).orderBy(asc(categories.name));
+      }
     }
     return allCategories;
   } catch (error: any) {
@@ -84,7 +117,9 @@ export async function getCategories() {
       try {
         console.log("Self-healing: Creating categories tables...");
         await initializeCategoryTables();
-        const allCategories = await db.select().from(categories).orderBy(asc(categories.name));
+        const allCategories = type 
+          ? await db.select().from(categories).where(eq(categories.type, type)).orderBy(asc(categories.name))
+          : await db.select().from(categories).orderBy(asc(categories.name));
         return allCategories;
       } catch (retryErr) {
         console.error("Self-healing fetch failed:", retryErr);
@@ -92,15 +127,15 @@ export async function getCategories() {
     }
     // Return standard mock fallbacks so that the UI never crashes
     return [
-      { id: "cat-f1", name: "Formula 1", slug: "formula-1", parentId: null, createdAt: new Date() },
-      { id: "cat-motogp", name: "MotoGP", slug: "motogp", parentId: null, createdAt: new Date() },
-      { id: "cat-sl", name: "Sri Lanka Racing", slug: "sri-lanka-racing", parentId: null, createdAt: new Date() },
-      { id: "cat-editors", name: "Editor's Pick", slug: "editors-pick", parentId: null, createdAt: new Date() },
-    ];
+      { id: "cat-f1", name: "Formula 1", slug: "formula-1", parentId: null, type: "blog", createdAt: new Date() },
+      { id: "cat-motogp", name: "MotoGP", slug: "motogp", parentId: null, type: "blog", createdAt: new Date() },
+      { id: "cat-sl", name: "Sri Lanka Racing", slug: "sri-lanka-racing", parentId: null, type: "blog", createdAt: new Date() },
+      { id: "cat-editors", name: "Editor's Pick", slug: "editors-pick", parentId: null, type: "blog", createdAt: new Date() },
+    ].filter(cat => !type || cat.type === type);
   }
 }
 
-export async function createCategory(data: { name: string; slug: string; parentId?: string | null }) {
+export async function createCategory(data: { name: string; slug: string; parentId?: string | null; type?: string }) {
   try {
     const id = crypto.randomUUID();
     await db.insert(categories).values({
@@ -108,9 +143,12 @@ export async function createCategory(data: { name: string; slug: string; parentI
       name: data.name,
       slug: data.slug,
       parentId: data.parentId || null,
+      type: data.type || "blog",
     });
 
     revalidatePath("/admin/categories");
+    revalidatePath("/admin/driver-categories");
+    revalidatePath("/admin/rider-categories");
     return { success: true, category: { id, ...data } };
   } catch (error: any) {
     console.error("Error creating category:", error);
@@ -124,8 +162,11 @@ export async function createCategory(data: { name: string; slug: string; parentI
           name: data.name,
           slug: data.slug,
           parentId: data.parentId || null,
+          type: data.type || "blog",
         });
         revalidatePath("/admin/categories");
+        revalidatePath("/admin/driver-categories");
+        revalidatePath("/admin/rider-categories");
         return { success: true, category: { id, ...data } };
       } catch (retryErr: any) {
         console.error("Self-healing create failed:", retryErr);
@@ -147,6 +188,8 @@ export async function deleteCategory(id: string) {
     await db.delete(categories).where(eq(categories.id, id));
 
     revalidatePath("/admin/categories");
+    revalidatePath("/admin/driver-categories");
+    revalidatePath("/admin/rider-categories");
     return { success: true };
   } catch (error: any) {
     console.error("Error deleting category:", error);
@@ -155,6 +198,8 @@ export async function deleteCategory(id: string) {
         console.log("Self-healing: Creating categories tables...");
         await initializeCategoryTables();
         revalidatePath("/admin/categories");
+        revalidatePath("/admin/driver-categories");
+        revalidatePath("/admin/rider-categories");
         return { success: true };
       } catch (retryErr) {
         console.error("Self-healing delete failed:", retryErr);

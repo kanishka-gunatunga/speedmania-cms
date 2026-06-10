@@ -21,6 +21,7 @@ export const categories = mysqlTable("categories", {
   name: varchar("name", { length: 100 }).notNull().unique(),
   slug: varchar("slug", { length: 191 }).notNull().unique(),
   parentId: varchar("parent_id", { length: 191 }),
+  type: varchar("type", { length: 50 }).notNull().default("blog"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
 });
