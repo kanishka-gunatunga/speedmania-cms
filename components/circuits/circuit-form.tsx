@@ -4,7 +4,7 @@ import { useForm, useFieldArray, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
-import { useTransition, useState } from "react";
+import { useTransition, useState, useEffect } from "react";
 import { Plus, Trash2, Globe, MapPin, Gauge, History } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,7 @@ const formSchema = z.object({
   fastestLapDriver: z.string().optional(),
   fastestLapYear: z.coerce.number().optional(),
   raceDistance: z.string().optional(),
+  racingCategory: z.string().optional(),
   faqs: z.array(faqSchema).default([]),
 });
 
@@ -58,6 +59,24 @@ export function CircuitForm({ initialData }: CircuitFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<{ id: string; name: string; slug: string; type: string }[]>([]);
+
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch("/api/categories");
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data);
+        }
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+      }
+    }
+    fetchCategories();
+  }, []);
+
+  const filteredCategories = categories.filter((c) => c.type === "driver" || c.type === "rider");
 
   const form = useForm<CircuitFormValues>({
     resolver: zodResolver(formSchema) as any,
@@ -75,6 +94,7 @@ export function CircuitForm({ initialData }: CircuitFormProps) {
       fastestLapDriver: initialData?.fastestLapDriver ?? "",
       fastestLapYear: initialData?.fastestLapYear ?? 0,
       raceDistance: initialData?.raceDistance ?? "",
+      racingCategory: initialData?.racingCategory ?? "",
       faqs: (initialData?.faqs || []).map((faq: any) => ({
         question: faq.question ?? "",
         answer: faq.answer ?? "",
@@ -159,6 +179,51 @@ export function CircuitForm({ initialData }: CircuitFormProps) {
                       <FormMessage />
                     </FormItem>
                   )}
+                />
+                <FormField
+                  control={form.control}
+                  name="racingCategory"
+                  render={({ field }) => {
+                    const val = field.value || "";
+                    const isInternational = ["f1", "formula 1", "formula-1", "motogp", "wec", "wrc"].some((intl) =>
+                      val.toLowerCase().includes(intl)
+                    );
+                    return (
+                      <FormItem>
+                        <FormLabel>Racing Category</FormLabel>
+                        <FormControl>
+                          {filteredCategories.length > 0 ? (
+                            <select
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              {...field}
+                            >
+                              <option value="">Select Category...</option>
+                              {filteredCategories.map((c) => (
+                                <option key={c.id} value={c.name}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <Input placeholder="E.g. Formula 1, MotoGP, Karting" {...field} />
+                          )}
+                        </FormControl>
+                        <FormDescription>
+                          {val ? (
+                            <span>
+                              Classification:{" "}
+                              <strong className={isInternational ? "text-blue-600 font-bold" : "text-emerald-600 font-bold"}>
+                                {isInternational ? "International" : "Domestic"}
+                              </strong>
+                            </span>
+                          ) : (
+                            "Select a category to classify the circuit."
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
                  <FormField
                   control={form.control}

@@ -2,10 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 import { db, circuits, circuitFaqs } from "@/lib/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 
 export async function getCircuits() {
   try {
+    // Dynamic Self-Healing: Check and alter circuits table to add racing_category if it doesn't exist
+    try {
+      await db.execute(sql`ALTER TABLE \`circuits\` ADD COLUMN IF NOT EXISTS \`racing_category\` varchar(100) DEFAULT NULL`);
+      await db.execute(sql`UPDATE \`circuits\` SET \`racing_category\` = 'Formula 1' WHERE \`racing_category\` IS NULL`);
+    } catch (migErr) {
+      console.warn("Self-healing migration warning for circuits table:", migErr);
+    }
+
     const allCircuits = await db.select().from(circuits).orderBy(desc(circuits.createdAt));
     return allCircuits;
   } catch (error) {
@@ -57,6 +65,7 @@ export async function createCircuit(data: {
   fastestLapDriver?: string;
   fastestLapYear?: number;
   raceDistance?: string;
+  racingCategory?: string;
   faqs?: { question: string; answer: string }[];
 }) {
   try {
@@ -111,6 +120,7 @@ export async function updateCircuit(id: string, data: {
   fastestLapDriver?: string;
   fastestLapYear?: number;
   raceDistance?: string;
+  racingCategory?: string;
   faqs?: { question: string; answer: string }[];
 }) {
   try {

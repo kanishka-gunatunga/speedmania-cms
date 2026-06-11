@@ -142,6 +142,7 @@ export const circuits = mysqlTable("circuits", {
   fastestLapDriver: varchar("fastest_lap_driver", { length: 191 }),
   fastestLapYear: int("fastest_lap_year"),
   raceDistance: varchar("race_distance", { length: 50 }),
+  racingCategory: varchar("racing_category", { length: 100 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
 });
@@ -327,6 +328,7 @@ export const sladaCommittee = mysqlTable("slada_committee", {
   bgPosition: varchar("bg_position", { length: 100 }).default("0% 0%"),
   image: text("image"), // custom uploaded image URL
   displayOrder: int("display_order").notNull().default(0),
+  category: varchar("category", { length: 50 }).notNull().default("slada"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
 });

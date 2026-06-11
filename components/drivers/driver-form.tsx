@@ -576,29 +576,49 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                 <FormField
                   control={form.control}
                   name="racingCategory"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Racing Category</FormLabel>
-                      <FormControl>
-                        {filteredCategories.length > 0 ? (
-                          <select
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            {...field}
-                          >
-                            <option value="">Select Category...</option>
-                            {filteredCategories.map((c) => (
-                              <option key={c.id} value={c.name}>
-                                {c.name}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <Input placeholder="Circuit / Karting / Supercross" {...field} />
-                        )}
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    const isF1Cat = field.value && (
+                      field.value.toLowerCase().includes("formula") ||
+                      field.value.toLowerCase().includes("f1") ||
+                      field.value.toLowerCase().includes("gp") ||
+                      field.value.toLowerCase().includes("grand prix")
+                    );
+                    return (
+                      <FormItem>
+                        <FormLabel>Racing Category</FormLabel>
+                        <FormControl>
+                          {filteredCategories.length > 0 ? (
+                            <select
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              {...field}
+                            >
+                              <option value="">Select Category...</option>
+                              {filteredCategories.map((c) => (
+                                <option key={c.id} value={c.name}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <Input placeholder="Circuit / Karting / Supercross" {...field} />
+                          )}
+                        </FormControl>
+                        <FormDescription>
+                          {field.value ? (
+                            <span>
+                              Classification:{" "}
+                              <strong className={isF1Cat ? "text-blue-600 font-bold" : "text-emerald-600 font-bold"}>
+                                {isF1Cat ? "International" : "Domestic"}
+                              </strong>
+                            </span>
+                          ) : (
+                            "Select a category to classify the driver."
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
                 <FormField
                   control={form.control}

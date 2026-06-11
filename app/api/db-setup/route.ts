@@ -381,13 +381,14 @@ export async function GET() {
       await db.execute(sql.raw(q));
     }
     
-    // Migrate existing drivers table if the columns don't exist yet
+    // Migrate existing drivers table and slada_committee if the columns don't exist yet
     try {
       await db.execute(sql.raw("ALTER TABLE `drivers` ADD COLUMN IF NOT EXISTS `player_type` varchar(20) DEFAULT 'driver';"));
       await db.execute(sql.raw("ALTER TABLE `drivers` ADD COLUMN IF NOT EXISTS `career_points` varchar(50);"));
       await db.execute(sql.raw("ALTER TABLE `drivers` ADD COLUMN IF NOT EXISTS `career_poles` int;"));
       await db.execute(sql.raw("ALTER TABLE `drivers` ADD COLUMN IF NOT EXISTS `biography` longtext;"));
       await db.execute(sql.raw("ALTER TABLE `drivers` ADD COLUMN IF NOT EXISTS `team_id` varchar(191) NULL;"));
+      await db.execute(sql.raw("ALTER TABLE `slada_committee` ADD COLUMN IF NOT EXISTS `category` varchar(50) NOT NULL DEFAULT 'slada';"));
       steps.push("Database schema migrations executed successfully!");
     } catch (migErr) {
       console.warn("Migration warning (might be already applied or unsupported syntax):", migErr);
@@ -395,23 +396,64 @@ export async function GET() {
 
     steps.push("Successfully verified or created all database tables!");
 
-    // Seed SLADA page if empty
-    const existingSladaPage = await db.select().from(sladaPage).limit(1);
-    if (existingSladaPage.length === 0) {
-      await db.insert(sladaPage).values({
-        id: "1",
+    // Seed multiple category pages if empty
+    const seededCategories = [
+      {
+        id: "slada",
         logoUrl: "/slada-logo.png",
         aboutTitle: "About SLADA",
         aboutImageUrl: "/slada-bio.png",
         aboutDescription: "The Sri Lanka Autosports Drivers Association (SLADA) is one of Sri Lanka’s leading motorsport organizations, dedicated to the development, promotion, and organization of competitive motor racing across the country. Established in 2013, SLADA was formed through the collective efforts of Sri Lanka's motorsport community following a period of inactivity in national racing events, with the objective of revitalizing and modernizing the sport.\n\nOperating under the recognition of the Ministry of Sports, SLADA works closely with the Sri Lanka Army and Sri Lanka Air Force to deliver professionally organized motorsport events at some of the country's most iconic racing venues, including Katukurunda and Saliyapura. The association plays a key role in maintaining competitive standards, improving safety regulations, and creating opportunities for both experienced competitors and emerging talent.\n\nSLADA's racing calendar features a variety of tarmac and gravel racing disciplines for both automobiles and motorcycles, bringing together drivers, riders, teams, sponsors, officials, and fans from across Sri Lanka. Through its commitment to innovation, professionalism, and safety, SLADA continues to contribute significantly to the growth of Sri Lankan motorsport while helping develop the next generation of racing talent.",
         committeeTitle: "SLADA Committee (2026/2027)",
         committeeDescription: "Following the 14th Annual General Meeting, the following office bearers were appointed to lead SLADA for the 2026/2027 term."
-      });
-      steps.push("Seeded default SLADA page content.");
+      },
+      {
+        id: "cmsc",
+        logoUrl: "/logo.svg",
+        aboutTitle: "About CMSC",
+        aboutImageUrl: "/slada-bio.png",
+        aboutDescription: "The Ceylon Motor Sports Club (CMSC) is one of the oldest motor sports clubs in Sri Lanka, dedicated to fostering motorsport excellence, organising track races, hill climbs, and rallies across the nation. Formed during the early years of Sri Lankan motorsports, CMSC has been a pioneer in creating safe, structured, and highly competitive racing events, nurturing generations of national champions.\n\nWorking alongside national sports bodies and global federations, CMSC maintains international safety regulations and driving standards, giving local competitors a path to regional motorsport representation. Through rallies, drag races, and autocrosses, the Ceylon Motor Sports Club continues to be a cornerstone of racing culture in Sri Lanka.",
+        committeeTitle: "CMSC Committee (2026/2027)",
+        committeeDescription: "Following the recent general assembly, the following office bearers were appointed to lead CMSC for the 2026/2027 term."
+      },
+      {
+        id: "mrs",
+        logoUrl: "/logo.svg",
+        aboutTitle: "About MRS",
+        aboutImageUrl: "/slada-bio.png",
+        aboutDescription: "The Motor Racing Association of Sri Lanka (MRS) is dedicated to organizing professional racing events across tarmac and gravel tracks. MRS focuses on expanding the reach of motorsports by hosting accessible track days, karting events, and entry-level racing series for newcomers.\n\nCollaborating with local teams and sponsors, MRS maintains competitive standards, improves track safety rules, and helps develop the next generation of racers in Sri Lanka.",
+        committeeTitle: "MRS Committee (2026/2027)",
+        committeeDescription: "Following the recent general assembly, the following office bearers were appointed to lead MRS for the 2026/2027 term."
+      },
+      {
+        id: "slamsc",
+        logoUrl: "/logo.svg",
+        aboutTitle: "About SLAMSC",
+        aboutImageUrl: "/slada-bio.png",
+        aboutDescription: "The Sri Lanka Motor Cycle Sports Club (SLAMSC) focuses on the development, training, and promotion of competitive motorcycle racing in Sri Lanka. Dedicated to motorcycling disciplines, SLAMSC organizes both road racing and motocross championships at prominent venues, bringing together riders, teams, and fans.\n\nSLAMSC is committed to promoting rider safety, professional training, and rider development, ensuring Sri Lankan riders can excel on both domestic and international stages.",
+        committeeTitle: "SLAMSC Committee (2026/2027)",
+        committeeDescription: "Following the recent general assembly, the following office bearers were appointed to lead SLAMSC for the 2026/2027 term."
+      }
+    ];
+
+    for (const cat of seededCategories) {
+      const existingPage = await db.select().from(sladaPage).where(sql`id = ${cat.id}`).limit(1);
+      if (existingPage.length === 0) {
+        await db.insert(sladaPage).values({
+          id: cat.id,
+          logoUrl: cat.logoUrl,
+          aboutTitle: cat.aboutTitle,
+          aboutImageUrl: cat.aboutImageUrl,
+          aboutDescription: cat.aboutDescription,
+          committeeTitle: cat.committeeTitle,
+          committeeDescription: cat.committeeDescription
+        });
+        steps.push(`Seeded default ${cat.id} page content.`);
+      }
     }
 
-    // Seed SLADA committee members if empty
-    const existingSladaCommittee = await db.select().from(sladaCommittee).limit(1);
+    // Seed default SLADA committee members if empty
+    const existingSladaCommittee = await db.select().from(sladaCommittee).where(sql`category = 'slada'`).limit(1);
     if (existingSladaCommittee.length === 0) {
       const defaultMembers = [
         { name: "Sanjaya Kariyawansa", role: "President", bgPosition: "0% 0%", displayOrder: 1 },
@@ -430,9 +472,17 @@ export async function GET() {
           role: member.role,
           bgPosition: member.bgPosition,
           displayOrder: member.displayOrder,
+          category: "slada",
         });
       }
       steps.push(`Seeded ${defaultMembers.length} SLADA committee members.`);
+    }
+
+    // Cleanup old page setting ID "1" to keep data normalized
+    try {
+      await db.delete(sladaPage).where(sql`id = '1'`);
+    } catch (cleanErr) {
+      // Ignore cleanup error if row not found
     }
 
     // 2. SEED BLOGS IF EMPTY

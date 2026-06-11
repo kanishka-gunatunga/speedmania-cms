@@ -9,8 +9,18 @@ const globalForDb = globalThis as unknown as {
 const connectionString = process.env.DATABASE_URL;
 const conn = globalForDb.conn ?? (
   connectionString 
-    ? mysql.createPool(connectionString) 
-    : mysql.createPool({ host: "localhost" })
+    ? mysql.createPool({
+        uri: connectionString,
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 10000,
+        connectionLimit: 10,
+      }) 
+    : mysql.createPool({ 
+        host: "localhost",
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 10000,
+        connectionLimit: 10,
+      })
 );
 
 if (process.env.NODE_ENV !== "production") globalForDb.conn = conn;

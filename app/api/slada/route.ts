@@ -1,11 +1,14 @@
 import { getSladaContent } from "@/lib/actions/slada.actions";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const result = await getSladaContent();
+    const { searchParams } = new URL(request.url);
+    const category = searchParams.get("category") || "slada";
+    
+    const result = await getSladaContent(category);
     if (result.success) {
       return NextResponse.json({
         page: result.page,
