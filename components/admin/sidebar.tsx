@@ -64,6 +64,11 @@ const NAV_ITEMS = [
     icon: Trophy,
   },
   {
+    label: "SLADA",
+    href: "/admin/slada",
+    icon: FileText,
+  },
+  {
     label: "Users",
     href: "/admin/users",
     icon: User,
