@@ -306,6 +306,31 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   }),
 }));
 
+// SLADA PAGE CONTENT TABLE
+export const sladaPage = mysqlTable("slada_page", {
+  id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => "1"),
+  logoUrl: text("logo_url").notNull().default("/slada-logo.png"),
+  aboutTitle: text("about_title").notNull().default("About SLADA"),
+  aboutImageUrl: text("about_image_url").notNull().default("/slada-bio.png"),
+  aboutDescription: longtext("about_description").notNull(),
+  committeeTitle: text("committee_title").notNull().default("SLADA Committee (2026/2027)"),
+  committeeDescription: text("committee_description").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
+});
+
+// SLADA COMMITTEE MEMBERS TABLE
+export const sladaCommittee = mysqlTable("slada_committee", {
+  id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: varchar("name", { length: 255 }).notNull(),
+  role: varchar("role", { length: 255 }).notNull(),
+  bgPosition: varchar("bg_position", { length: 100 }).default("0% 0%"),
+  image: text("image"), // custom uploaded image URL
+  displayOrder: int("display_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
+});
+
 export type Blog = typeof blogs.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type BlogCategory = typeof blogCategories.$inferSelect;
@@ -317,3 +342,6 @@ export type CircuitFaq = typeof circuitFaqs.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type Team = typeof teams.$inferSelect;
+export type SladaPage = typeof sladaPage.$inferSelect;
+export type SladaCommittee = typeof sladaCommittee.$inferSelect;
+

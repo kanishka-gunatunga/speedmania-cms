@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
-import { circuits, circuitFaqs, drivers, riderStats, achievements, blogs, categories, blogCategories, teams } from "@/lib/db/schema";
+import { circuits, circuitFaqs, drivers, riderStats, achievements, blogs, categories, blogCategories, teams, sladaPage, sladaCommittee } from "@/lib/db/schema";
 
 const MOCK_CIRCUITS = [
   {
@@ -349,6 +349,31 @@ export async function GET() {
         \`updated_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (\`id\`),
         UNIQUE KEY \`teams_slug_unique\` (\`slug\`)
+      );`,
+
+      `CREATE TABLE IF NOT EXISTS \`slada_page\` (
+        \`id\` varchar(191) NOT NULL,
+        \`logo_url\` text NOT NULL,
+        \`about_title\` text NOT NULL,
+        \`about_image_url\` text NOT NULL,
+        \`about_description\` longtext NOT NULL,
+        \`committee_title\` text NOT NULL,
+        \`committee_description\` text NOT NULL,
+        \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        \`updated_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (\`id\`)
+      );`,
+
+      `CREATE TABLE IF NOT EXISTS \`slada_committee\` (
+        \`id\` varchar(191) NOT NULL,
+        \`name\` varchar(255) NOT NULL,
+        \`role\` varchar(255) NOT NULL,
+        \`bg_position\` varchar(100) DEFAULT '0% 0%',
+        \`image\` text,
+        \`display_order\` int NOT NULL DEFAULT 0,
+        \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        \`updated_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (\`id\`)
       );`
     ];
 
@@ -369,6 +394,46 @@ export async function GET() {
     }
 
     steps.push("Successfully verified or created all database tables!");
+
+    // Seed SLADA page if empty
+    const existingSladaPage = await db.select().from(sladaPage).limit(1);
+    if (existingSladaPage.length === 0) {
+      await db.insert(sladaPage).values({
+        id: "1",
+        logoUrl: "/slada-logo.png",
+        aboutTitle: "About SLADA",
+        aboutImageUrl: "/slada-bio.png",
+        aboutDescription: "The Sri Lanka Autosports Drivers Association (SLADA) is one of Sri Lanka’s leading motorsport organizations, dedicated to the development, promotion, and organization of competitive motor racing across the country. Established in 2013, SLADA was formed through the collective efforts of Sri Lanka's motorsport community following a period of inactivity in national racing events, with the objective of revitalizing and modernizing the sport.\n\nOperating under the recognition of the Ministry of Sports, SLADA works closely with the Sri Lanka Army and Sri Lanka Air Force to deliver professionally organized motorsport events at some of the country's most iconic racing venues, including Katukurunda and Saliyapura. The association plays a key role in maintaining competitive standards, improving safety regulations, and creating opportunities for both experienced competitors and emerging talent.\n\nSLADA's racing calendar features a variety of tarmac and gravel racing disciplines for both automobiles and motorcycles, bringing together drivers, riders, teams, sponsors, officials, and fans from across Sri Lanka. Through its commitment to innovation, professionalism, and safety, SLADA continues to contribute significantly to the growth of Sri Lankan motorsport while helping develop the next generation of racing talent.",
+        committeeTitle: "SLADA Committee (2026/2027)",
+        committeeDescription: "Following the 14th Annual General Meeting, the following office bearers were appointed to lead SLADA for the 2026/2027 term."
+      });
+      steps.push("Seeded default SLADA page content.");
+    }
+
+    // Seed SLADA committee members if empty
+    const existingSladaCommittee = await db.select().from(sladaCommittee).limit(1);
+    if (existingSladaCommittee.length === 0) {
+      const defaultMembers = [
+        { name: "Sanjaya Kariyawansa", role: "President", bgPosition: "0% 0%", displayOrder: 1 },
+        { name: "Rizvi Farouk", role: "Vice President", bgPosition: "33.333% 0%", displayOrder: 2 },
+        { name: "Maj. Gen. Devinda Perera (Retd)", role: "Vice President", bgPosition: "66.667% 0%", displayOrder: 3 },
+        { name: "Maj. Gen. Janaka Ranasinghe (Retd)", role: "Secretary", bgPosition: "100% 0%", displayOrder: 4 },
+        { name: "Maj. Gen. Piyal Siriwardana (Retd)", role: "Asst. Secretary", bgPosition: "0% 100%", displayOrder: 5 },
+        { name: "Mr. Upulwan Serasinghe", role: "Treasurer", bgPosition: "33.333% 100%", displayOrder: 6 },
+        { name: "Mr. Janaka Dias", role: "Asst. Treasurer", bgPosition: "66.667% 100%", displayOrder: 7 },
+        { name: "Maj. Gen. Janaka Ranasinghe (Retd)", role: "Secretary", bgPosition: "100% 100%", displayOrder: 8 }
+      ];
+      for (const member of defaultMembers) {
+        await db.insert(sladaCommittee).values({
+          id: crypto.randomUUID(),
+          name: member.name,
+          role: member.role,
+          bgPosition: member.bgPosition,
+          displayOrder: member.displayOrder,
+        });
+      }
+      steps.push(`Seeded ${defaultMembers.length} SLADA committee members.`);
+    }
 
     // 2. SEED BLOGS IF EMPTY
     const existingBlogs = await db.select().from(blogs).limit(1);
