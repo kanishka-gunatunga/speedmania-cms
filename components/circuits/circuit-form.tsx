@@ -59,7 +59,9 @@ export function CircuitForm({ initialData }: CircuitFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<{ id: string; name: string; slug: string; type: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string; slug: string; type: string; parentId?: string | null }[]>([]);
+  const [selectedParentId, setSelectedParentId] = useState<string>("");
+  const [selectedSubCategoryIds, setSelectedSubCategoryIds] = useState<string[]>([]);
 
   useEffect(() => {
     async function fetchCategories() {
@@ -76,7 +78,29 @@ export function CircuitForm({ initialData }: CircuitFormProps) {
     fetchCategories();
   }, []);
 
+  useEffect(() => {
+    if (initialData?.circuitCategories && categories.length > 0) {
+      const initialCatIds = initialData.circuitCategories.map((cc: any) => cc.categoryId);
+      setSelectedSubCategoryIds(initialCatIds);
+
+      // Find parentId from the selected subcategories
+      const subCats = categories.filter(c => initialCatIds.includes(c.id));
+      const parent = subCats.find(c => c.parentId);
+      if (parent && parent.parentId) {
+        setSelectedParentId(parent.parentId);
+      } else {
+        const topLevelSelected = categories.find(c => initialCatIds.includes(c.id) && !c.parentId);
+        if (topLevelSelected) {
+          setSelectedParentId(topLevelSelected.id);
+        }
+      }
+    }
+  }, [initialData, categories]);
+
   const filteredCategories = categories.filter((c) => c.type === "driver" || c.type === "rider");
+  const hasCircuitCategories = categories.some((c) => c.type === "circuit");
+  const topCategories = categories.filter((c) => !c.parentId && c.type === "circuit");
+  const subCategories = categories.filter((c) => c.parentId === selectedParentId && c.type === "circuit");
 
   const form = useForm<CircuitFormValues>({
     resolver: zodResolver(formSchema) as any,
@@ -112,10 +136,14 @@ export function CircuitForm({ initialData }: CircuitFormProps) {
     startTransition(async () => {
       try {
         let result;
+        const payload = {
+          ...data,
+          categoryIds: selectedSubCategoryIds,
+        };
         if (initialData?.id) {
-          result = await updateCircuit(initialData.id, data);
+          result = await updateCircuit(initialData.id, payload);
         } else {
-          result = await createCircuit(data);
+          result = await createCircuit(payload);
         }
 
         if (result.success) {
@@ -180,51 +208,110 @@ export function CircuitForm({ initialData }: CircuitFormProps) {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="racingCategory"
-                  render={({ field }) => {
-                    const val = field.value || "";
-                    const isInternational = ["f1", "formula 1", "formula-1", "motogp", "wec", "wrc"].some((intl) =>
-                      val.toLowerCase().includes(intl)
-                    );
-                    return (
-                      <FormItem>
-                        <FormLabel>Racing Category</FormLabel>
-                        <FormControl>
-                          {filteredCategories.length > 0 ? (
-                            <select
-                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                              {...field}
-                            >
-                              <option value="">Select Category...</option>
-                              {filteredCategories.map((c) => (
-                                <option key={c.id} value={c.name}>
-                                  {c.name}
-                                </option>
-                              ))}
-                            </select>
-                          ) : (
-                            <Input placeholder="E.g. Formula 1, MotoGP, Karting" {...field} />
+                {hasCircuitCategories ? (
+                  <>
+                    <FormItem>
+                      <FormLabel>Parent Category</FormLabel>
+                      <FormControl>
+                        <select
+                          value={selectedParentId}
+                          onChange={(e) => {
+                            setSelectedParentId(e.target.value);
+                            setSelectedSubCategoryIds([]);
+                          }}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <option value="">Select Category...</option>
+                          {topCategories.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormDescription>Select the top-level classification (e.g. Domestic or International).</FormDescription>
+                    </FormItem>
+
+                    {selectedParentId && (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Sub-Categories (Select all that apply)</FormLabel>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 border rounded-xl bg-muted/10">
+                          {subCategories.map((sub) => {
+                            const checked = selectedSubCategoryIds.includes(sub.id);
+                            return (
+                              <label key={sub.id} className="flex items-center gap-2.5 text-sm font-semibold cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedSubCategoryIds((prev) => [...prev, sub.id]);
+                                    } else {
+                                      setSelectedSubCategoryIds((prev) => prev.filter((id) => id !== sub.id));
+                                    }
+                                  }}
+                                  className="rounded border-input text-primary focus:ring-ring h-4.5 w-4.5"
+                                />
+                                <span>{sub.name}</span>
+                              </label>
+                            );
+                          })}
+                          {subCategories.length === 0 && (
+                            <p className="text-sm text-muted-foreground italic col-span-full">
+                              No sub-categories defined for this category. Go to Circuit Categories to add some.
+                            </p>
                           )}
-                        </FormControl>
-                        <FormDescription>
-                          {val ? (
-                            <span>
-                              Classification:{" "}
-                              <strong className={isInternational ? "text-blue-600 font-bold" : "text-emerald-600 font-bold"}>
-                                {isInternational ? "International" : "Domestic"}
-                              </strong>
-                            </span>
-                          ) : (
-                            "Select a category to classify the circuit."
-                          )}
-                        </FormDescription>
-                        <FormMessage />
+                        </div>
                       </FormItem>
-                    );
-                  }}
-                />
+                    )}
+                  </>
+                ) : (
+                  <FormField
+                    control={form.control}
+                    name="racingCategory"
+                    render={({ field }) => {
+                      const val = field.value || "";
+                      const isInternational = ["f1", "formula 1", "formula-1", "motogp", "wec", "wrc"].some((intl) =>
+                        val.toLowerCase().includes(intl)
+                      );
+                      return (
+                        <FormItem>
+                          <FormLabel>Racing Category</FormLabel>
+                          <FormControl>
+                            {filteredCategories.length > 0 ? (
+                              <select
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                {...field}
+                              >
+                                <option value="">Select Category...</option>
+                                {filteredCategories.map((c) => (
+                                  <option key={c.id} value={c.name}>
+                                    {c.name}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <Input placeholder="E.g. Formula 1, MotoGP, Karting" {...field} />
+                            )}
+                          </FormControl>
+                          <FormDescription>
+                            {val ? (
+                              <span>
+                                Classification:{" "}
+                                <strong className={isInternational ? "text-blue-600 font-bold" : "text-emerald-600 font-bold"}>
+                                  {isInternational ? "International" : "Domestic"}
+                                </strong>
+                              </span>
+                            ) : (
+                              "Select a category to classify the circuit."
+                            )}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
+                  />
+                )}
                  <FormField
                   control={form.control}
                   name="trackImage"

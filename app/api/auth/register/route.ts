@@ -3,16 +3,17 @@ import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { hashPassword } from "@/lib/auth/crypto.server";
 import { signToken } from "@/lib/auth/crypto.edge";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    const { username, password } = await request.json();
+    const { username, email, password, role } = await request.json();
 
-    if (!username || !password) {
+    if (!username || !email || !password) {
       return NextResponse.json(
-        { error: "Username and password are required" },
+        { error: "Username, email, and password are required" },
         { status: 400 }
       );
     }
@@ -25,6 +26,14 @@ export async function POST(request: Request) {
       );
     }
 
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
+      return NextResponse.json(
+        { error: "Please provide a valid email address" },
+        { status: 400 }
+      );
+    }
+
     if (password.length < 6) {
       return NextResponse.json(
         { error: "Password must be at least 6 characters long" },
@@ -32,7 +41,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if user already exists
+    // Determine role (only support fan or driver)
+    const assignedRole = role === "driver" ? "driver" : "fan";
+
+    // Check if username already exists
     const existingUser = await db.query.users.findFirst({
       where: eq(users.username, trimmedUsername),
     });
@@ -44,15 +56,28 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if email already exists
+    const existingEmail = await db.query.users.findFirst({
+      where: eq(users.email, trimmedEmail),
+    });
+
+    if (existingEmail) {
+      return NextResponse.json(
+        { error: "Email is already registered" },
+        { status: 400 }
+      );
+    }
+
     const passwordHash = hashPassword(password);
     const userId = crypto.randomUUID();
 
-    // Create user with "fan" role
+    // Create user with selected role and email
     await db.insert(users).values({
       id: userId,
       username: trimmedUsername,
+      email: trimmedEmail,
       passwordHash,
-      role: "fan",
+      role: assignedRole,
     });
 
     // Create token
@@ -60,13 +85,24 @@ export async function POST(request: Request) {
     const payload = `${userId}:${trimmedUsername}:${expiry}`;
     const token = await signToken(payload);
 
+    // Set cookie for session sharing on same domain
+    const cookieStore = await cookies();
+    cookieStore.set("user_session", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+      path: "/",
+    });
+
     return NextResponse.json({
       success: true,
       token,
       user: {
         id: userId,
         username: trimmedUsername,
-        role: "fan",
+        email: trimmedEmail,
+        role: assignedRole,
       },
     });
   } catch (error: any) {
@@ -77,3 +113,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

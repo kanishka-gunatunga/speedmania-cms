@@ -289,11 +289,13 @@ export async function GET() {
         \`id\` varchar(191) NOT NULL,
         \`name\` varchar(100) NOT NULL,
         \`slug\` varchar(191) NOT NULL,
+        \`parent_id\` varchar(191) DEFAULT NULL,
+        \`type\` varchar(50) NOT NULL DEFAULT 'blog',
         \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
         \`updated_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         CONSTRAINT \`categories_id\` PRIMARY KEY(\`id\`),
-        CONSTRAINT \`categories_name_unique\` UNIQUE(\`name\`),
-        CONSTRAINT \`categories_slug_unique\` UNIQUE(\`slug\`)
+        CONSTRAINT \`categories_name_type_unique\` UNIQUE(\`name\`, \`type\`),
+        CONSTRAINT \`categories_slug_type_unique\` UNIQUE(\`slug\`, \`type\`)
       );`,
 
       `CREATE TABLE IF NOT EXISTS \`blog_categories\` (
@@ -389,6 +391,9 @@ export async function GET() {
       await db.execute(sql.raw("ALTER TABLE `drivers` ADD COLUMN IF NOT EXISTS `biography` longtext;"));
       await db.execute(sql.raw("ALTER TABLE `drivers` ADD COLUMN IF NOT EXISTS `team_id` varchar(191) NULL;"));
       await db.execute(sql.raw("ALTER TABLE `slada_committee` ADD COLUMN IF NOT EXISTS `category` varchar(50) NOT NULL DEFAULT 'slada';"));
+      await db.execute(sql.raw("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `email` varchar(255) NULL;"));
+      await db.execute(sql.raw("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `otp` varchar(10) NULL;"));
+      await db.execute(sql.raw("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `otp_expiry` timestamp NULL;"));
       steps.push("Database schema migrations executed successfully!");
     } catch (migErr) {
       console.warn("Migration warning (might be already applied or unsupported syntax):", migErr);

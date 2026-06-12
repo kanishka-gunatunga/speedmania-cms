@@ -15,8 +15,8 @@ async function initializeCategoryTables() {
       \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
       \`updated_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       CONSTRAINT \`categories_id\` PRIMARY KEY(\`id\`),
-      CONSTRAINT \`categories_name_unique\` UNIQUE(\`name\`),
-      CONSTRAINT \`categories_slug_unique\` UNIQUE(\`slug\`),
+      CONSTRAINT \`categories_name_type_unique\` UNIQUE(\`name\`, \`type\`),
+      CONSTRAINT \`categories_slug_type_unique\` UNIQUE(\`slug\`, \`type\`),
       CONSTRAINT \`fk_categories_parent\` FOREIGN KEY (\`parent_id\`) REFERENCES \`categories\` (\`id\`) ON DELETE SET NULL
     );`,
     `CREATE TABLE IF NOT EXISTS \`blog_categories\` (
@@ -94,6 +94,24 @@ export async function getCategories(type?: string) {
       }
     }
 
+    // Dynamic Self-Healing: Migrate unique indexes to composite constraints (name+type, slug+type)
+    try {
+      try {
+        await db.execute(sql`ALTER TABLE \`categories\` DROP INDEX \`categories_name_unique\``);
+      } catch (err) {}
+      try {
+        await db.execute(sql`ALTER TABLE \`categories\` DROP INDEX \`categories_slug_unique\``);
+      } catch (err) {}
+      try {
+        await db.execute(sql`ALTER TABLE \`categories\` ADD UNIQUE KEY \`categories_name_type_unique\` (\`name\`, \`type\`)`);
+      } catch (err) {}
+      try {
+        await db.execute(sql`ALTER TABLE \`categories\` ADD UNIQUE KEY \`categories_slug_type_unique\` (\`slug\`, \`type\`)`);
+      } catch (err) {}
+    } catch (migErr) {
+      console.warn("Self-healing unique indexes warning:", migErr);
+    }
+
     let allCategories;
     if (type) {
       allCategories = await db.select().from(categories).where(eq(categories.type, type)).orderBy(asc(categories.name));
@@ -137,6 +155,24 @@ export async function getCategories(type?: string) {
 
 export async function createCategory(data: { name: string; slug: string; parentId?: string | null; type?: string }) {
   try {
+    // Dynamic Self-Healing: Ensure composite unique constraints exist before insert
+    try {
+      try {
+        await db.execute(sql`ALTER TABLE \`categories\` DROP INDEX \`categories_name_unique\``);
+      } catch (err) {}
+      try {
+        await db.execute(sql`ALTER TABLE \`categories\` DROP INDEX \`categories_slug_unique\``);
+      } catch (err) {}
+      try {
+        await db.execute(sql`ALTER TABLE \`categories\` ADD UNIQUE KEY \`categories_name_type_unique\` (\`name\`, \`type\`)`);
+      } catch (err) {}
+      try {
+        await db.execute(sql`ALTER TABLE \`categories\` ADD UNIQUE KEY \`categories_slug_type_unique\` (\`slug\`, \`type\`)`);
+      } catch (err) {}
+    } catch (migErr) {
+      console.warn("Self-healing unique indexes warning in createCategory:", migErr);
+    }
+
     const id = crypto.randomUUID();
     await db.insert(categories).values({
       id,
