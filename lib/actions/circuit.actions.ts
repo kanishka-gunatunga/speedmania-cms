@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { db, circuits, circuitFaqs, circuitCategories, categories } from "@/lib/db";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, or, like } from "drizzle-orm";
 
-export async function getCircuits() {
+export async function getCircuits(q?: string) {
   try {
     // Dynamic Self-Healing: Check and alter circuits table to add racing_category if it doesn't exist
     try {
@@ -27,7 +27,20 @@ export async function getCircuits() {
       console.warn("Self-healing table creation warning for circuit_categories:", tableErr);
     }
 
-    const allCircuits = await db.select().from(circuits).orderBy(desc(circuits.createdAt));
+    let query = db.select().from(circuits);
+
+    if (q) {
+      const searchPattern = `%${q}%`;
+      query = query.where(
+        or(
+          like(circuits.name, searchPattern),
+          like(circuits.slug, searchPattern),
+          like(circuits.racingCategory, searchPattern)
+        )
+      ) as any;
+    }
+
+    const allCircuits = await query.orderBy(desc(circuits.createdAt));
 
     const mappings = await db
       .select({

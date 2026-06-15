@@ -2,6 +2,7 @@ import { getCircuits, deleteCircuit } from "@/lib/actions/circuit.actions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2, Globe } from "lucide-react";
+import { SearchBar } from "@/components/admin/search-bar";
 import {
   Table,
   TableBody,
@@ -14,8 +15,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export const dynamic = 'force-dynamic';
 
-export default async function CircuitsPage() {
-  const circuitsList = await getCircuits();
+interface PageProps {
+  searchParams: Promise<{
+    q?: string;
+  }>;
+}
+
+export default async function CircuitsPage({ searchParams }: PageProps) {
+  const resolvedParams = await searchParams;
+  const q = resolvedParams.q;
+  const circuitsList = await getCircuits(q);
 
   return (
     <div className="container mx-auto p-8 max-w-6xl">
@@ -40,6 +49,7 @@ export default async function CircuitsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <SearchBar placeholder="Search circuits by name, category..." />
           <div className="rounded-md border border-border/50 overflow-hidden">
             <Table>
               <TableHeader className="bg-muted/50">

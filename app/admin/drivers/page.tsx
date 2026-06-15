@@ -2,6 +2,7 @@ import { getDrivers, deleteDriver, approveDriver, rejectDriver } from "@/lib/act
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2, User, Check, X } from "lucide-react";
+import { SearchBar } from "@/components/admin/search-bar";
 import {
   Table,
   TableBody,
@@ -14,8 +15,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export const dynamic = 'force-dynamic';
 
-export default async function DriversPage() {
-  const drivers = await getDrivers();
+interface PageProps {
+  searchParams: Promise<{
+    q?: string;
+  }>;
+}
+
+export default async function DriversPage({ searchParams }: PageProps) {
+  const resolvedParams = await searchParams;
+  const q = resolvedParams.q;
+  const drivers = await getDrivers(q);
 
   return (
     <div className="container mx-auto p-8 max-w-6xl">
@@ -40,6 +49,7 @@ export default async function DriversPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <SearchBar placeholder="Search athletes by name, team, category..." />
           <div className="rounded-md border border-border/50">
             <Table>
               <TableHeader className="bg-muted/50">
