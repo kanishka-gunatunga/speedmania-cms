@@ -2,12 +2,26 @@
 
 import { revalidatePath } from "next/cache";
 import { db, drivers, achievements, riderStats } from "@/lib/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, or, like } from "drizzle-orm";
 import { getCurrentUser, getCurrentAdmin } from "./auth.actions";
 
-export async function getDrivers() {
+export async function getDrivers(q?: string) {
   try {
-    const allDrivers = await db.select().from(drivers).orderBy(desc(drivers.createdAt));
+    let query = db.select().from(drivers);
+    
+    if (q) {
+      const searchPattern = `%${q}%`;
+      query = query.where(
+        or(
+          like(drivers.fullName, searchPattern),
+          like(drivers.slug, searchPattern),
+          like(drivers.currentTeam, searchPattern),
+          like(drivers.racingCategory, searchPattern)
+        )
+      ) as any;
+    }
+    
+    const allDrivers = await query.orderBy(desc(drivers.createdAt));
     return allDrivers;
   } catch (error) {
     console.error("Error fetching drivers:", error);
