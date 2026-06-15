@@ -2,11 +2,25 @@
 
 import { revalidatePath } from "next/cache";
 import { db, teams, drivers } from "@/lib/db";
-import { eq, desc, or, inArray } from "drizzle-orm";
+import { eq, desc, or, inArray, like } from "drizzle-orm";
 
-export async function getTeams() {
+export async function getTeams(q?: string) {
   try {
-    const allTeams = await db.select().from(teams).orderBy(desc(teams.createdAt));
+    let query = db.select().from(teams);
+
+    if (q) {
+      const searchPattern = `%${q}%`;
+      query = query.where(
+        or(
+          like(teams.name, searchPattern),
+          like(teams.subtitle, searchPattern),
+          like(teams.slug, searchPattern),
+          like(teams.category, searchPattern)
+        )
+      ) as any;
+    }
+
+    const allTeams = await query.orderBy(desc(teams.createdAt));
     return allTeams;
   } catch (error) {
     console.error("Error fetching teams:", error);

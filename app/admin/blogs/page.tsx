@@ -2,6 +2,7 @@ import { getBlogs, deleteBlog } from "@/lib/actions/blog.actions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2 } from "lucide-react";
+import { SearchBar } from "@/components/admin/search-bar";
 import {
   Table,
   TableBody,
@@ -14,8 +15,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export const dynamic = 'force-dynamic';
 
-export default async function BlogsPage() {
-  const blogs = await getBlogs();
+interface PageProps {
+  searchParams: Promise<{
+    q?: string;
+  }>;
+}
+
+export default async function BlogsPage({ searchParams }: PageProps) {
+  const resolvedParams = await searchParams;
+  const q = resolvedParams.q;
+  const blogs = await getBlogs(q);
 
   return (
     <div className="container mx-auto p-8 max-w-6xl">
@@ -40,6 +49,7 @@ export default async function BlogsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <SearchBar placeholder="Search posts by title, author..." />
           <div className="rounded-md border border-border/50">
             <Table>
               <TableHeader className="bg-muted/50">
