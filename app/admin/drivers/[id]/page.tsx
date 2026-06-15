@@ -75,7 +75,17 @@ export default async function EditDriverPage({ params }: { params: Promise<{ id:
     const formatAchievements = (list: any[]) => {
       if (!list || list.length === 0) return "(none)";
       return list
-        .map(a => `${a.year || "N/A"}: ${a.raceName || "N/A"} - Position: ${a.position || "N/A"} (${a.category || "N/A"})${a.points ? ` - Pts: ${a.points}` : ""}`)
+        .map(a => {
+          const parts = [];
+          if (a.year) parts.push(`Year: ${a.year}`);
+          if (a.raceName) parts.push(`Race: ${a.raceName}`);
+          if (a.position) parts.push(`Pos: ${a.position}`);
+          if (a.category) parts.push(`Cat: ${a.category}`);
+          if (a.team) parts.push(`Team: ${a.team}`);
+          if (a.date) parts.push(`Date: ${a.date}`);
+          if (a.points) parts.push(`Pts: ${a.points}`);
+          return parts.join(" | ");
+        })
         .join("\n");
     };
 
@@ -94,7 +104,29 @@ export default async function EditDriverPage({ params }: { params: Promise<{ id:
     const formatStats = (list: any[]) => {
       if (!list || list.length === 0) return "(none)";
       return list
-        .map(s => `Season ${s.season || "N/A"}: ${s.category || "N/A"} / ${s.bike || "N/A"} (Starts: ${s.starts || 0}, Wins: ${s.firstPos || 0}, Podiums: ${s.podiums || 0}, Pts: ${s.points || 0})`)
+        .map(s => {
+          const { id, driverId, ...rest } = s;
+          const parts = [];
+          if (rest.season) parts.push(`Season: ${rest.season}`);
+          if (rest.category) parts.push(`Cat: ${rest.category}`);
+          if (rest.bike) parts.push(`Veh: ${rest.bike}`);
+          if (rest.starts) parts.push(`Starts: ${rest.starts}`);
+          if (rest.poles) parts.push(`Poles: ${rest.poles}`);
+          if (rest.firstPos) parts.push(`1st: ${rest.firstPos}`);
+          if (rest.secondPos) parts.push(`2nd: ${rest.secondPos}`);
+          if (rest.thirdPos) parts.push(`3rd: ${rest.thirdPos}`);
+          if (rest.podiums) parts.push(`Podiums: ${rest.podiums}`);
+          if (rest.points) parts.push(`Pts: ${rest.points}`);
+          if (rest.position) parts.push(`Pos: ${rest.position}`);
+          if (rest.fastestLaps) parts.push(`FL: ${rest.fastestLaps}`);
+          if (rest.dnfs) parts.push(`DNF: ${rest.dnfs}`);
+          if (rest.sprintRaces) parts.push(`Sprint: ${rest.sprintRaces}`);
+          if (rest.sprintPoints) parts.push(`SPts: ${rest.sprintPoints}`);
+          if (rest.sprintWins) parts.push(`SWins: ${rest.sprintWins}`);
+          if (rest.sprintPodiums) parts.push(`SPod: ${rest.sprintPodiums}`);
+          if (rest.sprintPoles) parts.push(`SPoles: ${rest.sprintPoles}`);
+          return parts.join(" | ");
+        })
         .join("\n");
     };
 
