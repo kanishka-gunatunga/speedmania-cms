@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, boolean, timestamp, longtext, int, primaryKey } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, text, boolean, timestamp, longtext, int, primaryKey, unique } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 
 // BLOGS TABLE
@@ -18,13 +18,16 @@ export const blogs = mysqlTable("blogs", {
 // CATEGORIES TABLE
 export const categories = mysqlTable("categories", {
   id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
-  name: varchar("name", { length: 100 }).notNull().unique(),
-  slug: varchar("slug", { length: 191 }).notNull().unique(),
+  name: varchar("name", { length: 100 }).notNull(),
+  slug: varchar("slug", { length: 191 }).notNull(),
   parentId: varchar("parent_id", { length: 191 }),
   type: varchar("type", { length: 50 }).notNull().default("blog"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
-});
+}, (table) => [
+  unique("categories_name_type_unique").on(table.name, table.type),
+  unique("categories_slug_type_unique").on(table.slug, table.type),
+]);
 
 // BLOG CATEGORIES JUNCTION TABLE
 export const blogCategories = mysqlTable("blog_categories", {
@@ -32,6 +35,14 @@ export const blogCategories = mysqlTable("blog_categories", {
   categoryId: varchar("category_id", { length: 191 }).notNull(),
 }, (table) => [
   primaryKey({ columns: [table.blogId, table.categoryId] })
+]);
+
+// CIRCUIT CATEGORIES JUNCTION TABLE
+export const circuitCategories = mysqlTable("circuit_categories", {
+  circuitId: varchar("circuit_id", { length: 191 }).notNull(),
+  categoryId: varchar("category_id", { length: 191 }).notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.circuitId, table.categoryId] })
 ]);
 
 
@@ -142,6 +153,7 @@ export const circuits = mysqlTable("circuits", {
   fastestLapDriver: varchar("fastest_lap_driver", { length: 191 }),
   fastestLapYear: int("fastest_lap_year"),
   raceDistance: varchar("race_distance", { length: 50 }),
+  racingCategory: varchar("racing_category", { length: 100 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
 });
@@ -162,6 +174,7 @@ export const blogsRelations = relations(blogs, ({ many }) => ({
 
 export const categoriesRelations = relations(categories, ({ many, one }) => ({
   blogCategories: many(blogCategories),
+  circuitCategories: many(circuitCategories),
   parent: one(categories, {
     fields: [categories.parentId],
     references: [categories.id],
@@ -208,6 +221,18 @@ export const riderStatsRelations = relations(riderStats, ({ one }) => ({
 
 export const circuitsRelations = relations(circuits, ({ many }) => ({
   faqs: many(circuitFaqs),
+  circuitCategories: many(circuitCategories),
+}));
+
+export const circuitCategoriesRelations = relations(circuitCategories, ({ one }) => ({
+  circuit: one(circuits, {
+    fields: [circuitCategories.circuitId],
+    references: [circuits.id],
+  }),
+  category: one(categories, {
+    fields: [circuitCategories.categoryId],
+    references: [categories.id],
+  }),
 }));
 
 export const circuitFaqsRelations = relations(circuitFaqs, ({ one }) => ({
@@ -269,6 +294,9 @@ export const teamsRelations = relations(teams, ({ many }) => ({
 export const users = mysqlTable("users", {
   id: varchar("id", { length: 191 }).primaryKey(),
   username: varchar("username", { length: 100 }).notNull().unique(),
+  email: varchar("email", { length: 255 }),
+  otp: varchar("otp", { length: 10 }),
+  otpExpiry: timestamp("otp_expiry"),
   passwordHash: text("password_hash").notNull(),
   role: varchar("role", { length: 20 }).default("admin"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -327,6 +355,7 @@ export const sladaCommittee = mysqlTable("slada_committee", {
   bgPosition: varchar("bg_position", { length: 100 }).default("0% 0%"),
   image: text("image"), // custom uploaded image URL
   displayOrder: int("display_order").notNull().default(0),
+  category: varchar("category", { length: 50 }).notNull().default("slada"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
 });
@@ -344,4 +373,5 @@ export type Comment = typeof comments.$inferSelect;
 export type Team = typeof teams.$inferSelect;
 export type SladaPage = typeof sladaPage.$inferSelect;
 export type SladaCommittee = typeof sladaCommittee.$inferSelect;
+export type CircuitCategory = typeof circuitCategories.$inferSelect;
 

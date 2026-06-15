@@ -60,6 +60,9 @@ export default function SladaAdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  
+  // Dynamic category state
+  const [selectedCategory, setSelectedCategory] = useState("slada");
 
   // Form states for SLADA page settings
   const [logoUrl, setLogoUrl] = useState("/slada-logo.png");
@@ -81,11 +84,11 @@ export default function SladaAdminPage() {
   const [memberCustomImage, setMemberCustomImage] = useState("");
   const [memberDisplayOrder, setMemberDisplayOrder] = useState("0");
 
-  const loadData = async () => {
+  const loadData = async (categoryToLoad = selectedCategory) => {
     setLoading(true);
     setError(null);
     try {
-      const result = await getSladaContent();
+      const result = await getSladaContent(categoryToLoad);
       if (result.success && result.page) {
         setLogoUrl(result.page.logoUrl);
         setAboutTitle(result.page.aboutTitle);
@@ -95,7 +98,7 @@ export default function SladaAdminPage() {
         setCommitteeDescription(result.page.committeeDescription);
         setCommittee(result.committee);
       } else {
-        setError(result.error || "Failed to load SLADA settings.");
+        setError(result.error || `Failed to load settings for ${categoryToLoad.toUpperCase()}.`);
       }
     } catch (err: any) {
       setError(err?.message || "Failed to load content.");
@@ -105,15 +108,15 @@ export default function SladaAdminPage() {
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    loadData(selectedCategory);
+  }, [selectedCategory]);
 
   const handleSavePageSettings = () => {
     setError(null);
     setSuccess(null);
     startTransition(async () => {
       try {
-        const result = await updateSladaPage({
+        const result = await updateSladaPage(selectedCategory, {
           logoUrl,
           aboutTitle,
           aboutImageUrl,
@@ -123,7 +126,7 @@ export default function SladaAdminPage() {
         });
 
         if (result.success) {
-          setSuccess("SLADA page settings updated successfully!");
+          setSuccess(`${selectedCategory.toUpperCase()} page settings updated successfully!`);
           setTimeout(() => setSuccess(null), 3000);
         } else {
           setError(result.error || "Failed to save settings.");
@@ -174,12 +177,12 @@ export default function SladaAdminPage() {
         if (editingMember) {
           result = await updateCommitteeMember(editingMember.id, memberData);
         } else {
-          result = await addCommitteeMember(memberData);
+          result = await addCommitteeMember(selectedCategory, memberData);
         }
 
         if (result.success) {
           setDialogOpen(false);
-          loadData();
+          loadData(selectedCategory);
         } else {
           alert(result.error || "Failed to save member.");
         }
@@ -198,7 +201,7 @@ export default function SladaAdminPage() {
       try {
         const result = await deleteCommitteeMember(id);
         if (result.success) {
-          loadData();
+          loadData(selectedCategory);
         } else {
           alert(result.error || "Failed to delete member.");
         }
@@ -212,19 +215,33 @@ export default function SladaAdminPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8">
         <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-        <p className="text-muted-foreground font-semibold">Loading SLADA settings...</p>
+        <p className="text-muted-foreground font-semibold">Loading settings for {selectedCategory.toUpperCase()}...</p>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto p-8 max-w-6xl">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">SLADA Page CMS</h1>
+          <h1 className="text-4xl font-extrabold tracking-tight">Racing Page CMS</h1>
           <p className="text-muted-foreground mt-2 text-lg">
             Manage page branding, About description, and Executive Committee members.
           </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Label htmlFor="category-select" className="font-bold text-sm shrink-0">Select Organization:</Label>
+          <select
+            id="category-select"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="bg-background border border-border rounded-xl text-sm px-4 py-2.5 font-bold transition-all focus:ring-2 focus:ring-primary/20 min-w-[200px]"
+          >
+            <option value="slada">SLADA</option>
+            <option value="cmsc">CMSC (Ceylon Motor Sports Club)</option>
+            <option value="mrs">MRS (Motor Racing Association)</option>
+            <option value="slamsc">SLAMSC (Sri Lanka Motor Cycle Sports Club)</option>
+          </select>
         </div>
       </div>
 

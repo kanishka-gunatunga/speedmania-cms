@@ -26,7 +26,7 @@ interface Category {
 
 interface CategoryManagerProps {
   initialCategories: Category[];
-  type?: "blog" | "driver" | "rider";
+  type?: string;
 }
 
 export function CategoryManager({ initialCategories, type = "blog" }: CategoryManagerProps) {

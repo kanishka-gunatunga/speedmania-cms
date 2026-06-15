@@ -44,6 +44,11 @@ const NAV_ITEMS = [
     icon: Tag,
   },
   {
+    label: "Circuit Categories",
+    href: "/admin/circuit-categories",
+    icon: Tag,
+  },
+  {
     label: "Teams",
     href: "/admin/teams",
     icon: Shield,
