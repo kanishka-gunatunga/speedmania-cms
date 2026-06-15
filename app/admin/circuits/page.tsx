@@ -49,7 +49,7 @@ export default async function CircuitsPage({ searchParams }: PageProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <SearchBar placeholder="Search circuits by name, category..." />
+          <SearchBar placeholder="Search circuits by name ..." />
           <div className="rounded-md border border-border/50 overflow-hidden">
             <Table>
               <TableHeader className="bg-muted/50">
