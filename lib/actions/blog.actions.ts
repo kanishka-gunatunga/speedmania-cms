@@ -2,11 +2,25 @@
 
 import { revalidatePath } from "next/cache";
 import { db, blogs, blogCategories, categories } from "@/lib/db";
-import { desc, eq, and } from "drizzle-orm";
+import { desc, eq, and, or, like } from "drizzle-orm";
 
-export async function getBlogs() {
+export async function getBlogs(q?: string) {
   try {
-    const allBlogs = await db.select().from(blogs).orderBy(desc(blogs.createdAt));
+    let query = db.select().from(blogs);
+
+    if (q) {
+      const searchPattern = `%${q}%`;
+      query = query.where(
+        or(
+          like(blogs.title, searchPattern),
+          like(blogs.slug, searchPattern),
+          like(blogs.excerpt, searchPattern),
+          like(blogs.author, searchPattern)
+        )
+      ) as any;
+    }
+
+    const allBlogs = await query.orderBy(desc(blogs.createdAt));
     return allBlogs;
   } catch (error) {
     console.error("Error fetching blogs:", error);

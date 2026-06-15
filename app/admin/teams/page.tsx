@@ -2,6 +2,7 @@ import { getTeams, deleteTeam } from "@/lib/actions/team.actions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2, Shield } from "lucide-react";
+import { SearchBar } from "@/components/admin/search-bar";
 import {
   Table,
   TableBody,
@@ -14,8 +15,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export const dynamic = 'force-dynamic';
 
-export default async function TeamsAdminPage() {
-  const teams = await getTeams();
+interface PageProps {
+  searchParams: Promise<{
+    q?: string;
+  }>;
+}
+
+export default async function TeamsAdminPage({ searchParams }: PageProps) {
+  const resolvedParams = await searchParams;
+  const q = resolvedParams.q;
+  const teams = await getTeams(q);
 
   return (
     <div className="container mx-auto p-8 max-w-6xl">
@@ -40,6 +49,7 @@ export default async function TeamsAdminPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <SearchBar placeholder="Search teams by name, category..." />
           <div className="rounded-md border border-border/50">
             <Table>
               <TableHeader className="bg-muted/50">
