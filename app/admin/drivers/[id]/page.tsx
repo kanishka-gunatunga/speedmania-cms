@@ -70,6 +70,44 @@ export default async function EditDriverPage({ params }: { params: Promise<{ id:
         });
       }
     });
+
+    // Compare Achievements
+    const formatAchievements = (list: any[]) => {
+      if (!list || list.length === 0) return "(none)";
+      return list
+        .map(a => `${a.year || "N/A"}: ${a.raceName || "N/A"} - Position: ${a.position || "N/A"} (${a.category || "N/A"})${a.points ? ` - Pts: ${a.points}` : ""}`)
+        .join("\n");
+    };
+
+    const currentAch = formatAchievements(driver.achievements);
+    const pendingAch = formatAchievements(pendingData.achievements);
+
+    if (currentAch !== pendingAch) {
+      diffs.push({
+        label: "Achievements",
+        current: currentAch,
+        pending: pendingAch
+      });
+    }
+
+    // Compare Stats
+    const formatStats = (list: any[]) => {
+      if (!list || list.length === 0) return "(none)";
+      return list
+        .map(s => `Season ${s.season || "N/A"}: ${s.category || "N/A"} / ${s.bike || "N/A"} (Starts: ${s.starts || 0}, Wins: ${s.firstPos || 0}, Podiums: ${s.podiums || 0}, Pts: ${s.points || 0})`)
+        .join("\n");
+    };
+
+    const currentStats = formatStats(driver.riderStats);
+    const pendingStats = formatStats(pendingData.riderStats);
+
+    if (currentStats !== pendingStats) {
+      diffs.push({
+        label: "Rider/Driver Stats",
+        current: currentStats,
+        pending: pendingStats
+      });
+    }
   }
 
   return (
@@ -117,8 +155,8 @@ export default async function EditDriverPage({ params }: { params: Promise<{ id:
                     diffs.map((diff, index) => (
                       <tr key={index} className="hover:bg-muted/20">
                         <td className="px-4 py-3 font-semibold text-foreground">{diff.label}</td>
-                        <td className="px-4 py-3 text-zinc-500 break-all">{diff.current}</td>
-                        <td className="px-4 py-3 text-blue-600 dark:text-blue-400 font-medium break-all">{diff.pending}</td>
+                        <td className="px-4 py-3 text-zinc-500 break-all whitespace-pre-line">{diff.current}</td>
+                        <td className="px-4 py-3 text-blue-600 dark:text-blue-400 font-medium break-all whitespace-pre-line">{diff.pending}</td>
                       </tr>
                     ))
                   )}
