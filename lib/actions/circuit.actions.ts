@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db, circuits, circuitFaqs, circuitCategories, categories } from "@/lib/db";
 import { eq, desc, sql, or, like } from "drizzle-orm";
 
-export async function getCircuits(q?: string) {
+export async function getCircuits(q?: string, page: number = 1, limit: number = 10) {
   try {
     // Dynamic Self-Healing: Check and alter circuits table to add racing_category if it doesn't exist
     try {
@@ -28,19 +28,25 @@ export async function getCircuits(q?: string) {
     }
 
     let query = db.select().from(circuits);
+    let countQuery = db.select({ count: sql<number>`count(*)` }).from(circuits);
 
     if (q) {
       const searchPattern = `%${q}%`;
-      query = query.where(
-        or(
-          like(circuits.name, searchPattern),
-          like(circuits.slug, searchPattern),
-          like(circuits.racingCategory, searchPattern)
-        )
-      ) as any;
+      const searchCondition = or(
+        like(circuits.name, searchPattern),
+        like(circuits.slug, searchPattern),
+        like(circuits.racingCategory, searchPattern)
+      );
+      query = query.where(searchCondition) as any;
+      countQuery = countQuery.where(searchCondition) as any;
     }
 
-    const allCircuits = await query.orderBy(desc(circuits.createdAt));
+    const offset = (page - 1) * limit;
+
+    const [allCircuits, [{ count }]] = await Promise.all([
+      query.orderBy(desc(circuits.createdAt)).limit(limit).offset(offset),
+      countQuery
+    ]);
 
     const mappings = await db
       .select({
@@ -69,7 +75,7 @@ export async function getCircuits(q?: string) {
         circuitCategories: assoc,
       };
     });
-    return circuitsWithCats;
+    return { circuits: circuitsWithCats, total: Number(count) };
   } catch (error) {
     console.error("Error fetching circuits:", error);
     throw new Error("Failed to fetch circuits");

@@ -3,8 +3,17 @@ import { UsersTable } from "@/components/admin/users-table";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminUsersPage() {
-  const users = await getUsersList();
+interface PageProps {
+  searchParams: Promise<{
+    page?: string;
+  }>;
+}
+
+export default async function AdminUsersPage({ searchParams }: PageProps) {
+  const resolvedParams = await searchParams;
+  const page = parseInt(resolvedParams.page || "1");
+  const limit = 10;
+  const { users, total } = await getUsersList(page, limit);
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -15,7 +24,11 @@ export default async function AdminUsersPage() {
         </p>
       </div>
 
-      <UsersTable initialUsers={users} />
+      <UsersTable 
+        initialUsers={users} 
+        page={page} 
+        totalPages={Math.ceil(total / limit)} 
+      />
     </div>
   );
 }

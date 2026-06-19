@@ -2,26 +2,33 @@
 
 import { revalidatePath } from "next/cache";
 import { db, teams, drivers } from "@/lib/db";
-import { eq, desc, or, inArray, like } from "drizzle-orm";
+import { eq, desc, or, inArray, like, sql } from "drizzle-orm";
 
-export async function getTeams(q?: string) {
+export async function getTeams(q?: string, page: number = 1, limit: number = 10) {
   try {
     let query = db.select().from(teams);
+    let countQuery = db.select({ count: sql<number>`count(*)` }).from(teams);
 
     if (q) {
       const searchPattern = `%${q}%`;
-      query = query.where(
-        or(
-          like(teams.name, searchPattern),
-          like(teams.subtitle, searchPattern),
-          like(teams.slug, searchPattern),
-          like(teams.category, searchPattern)
-        )
-      ) as any;
+      const searchCondition = or(
+        like(teams.name, searchPattern),
+        like(teams.subtitle, searchPattern),
+        like(teams.slug, searchPattern),
+        like(teams.category, searchPattern)
+      );
+      query = query.where(searchCondition) as any;
+      countQuery = countQuery.where(searchCondition) as any;
     }
 
-    const allTeams = await query.orderBy(desc(teams.createdAt));
-    return allTeams;
+    const offset = (page - 1) * limit;
+
+    const [allTeams, [{ count }]] = await Promise.all([
+      query.orderBy(desc(teams.createdAt)).limit(limit).offset(offset),
+      countQuery
+    ]);
+
+    return { teams: allTeams, total: Number(count) };
   } catch (error) {
     console.error("Error fetching teams:", error);
     throw new Error("Failed to fetch teams");

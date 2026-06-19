@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function EditTeamPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const team = await getTeamById(resolvedParams.id);
-  const drivers = await getDrivers();
+  const { drivers } = await getDrivers(undefined, 1, 1000);
 
   if (!team) {
     notFound();

@@ -2,27 +2,34 @@
 
 import { revalidatePath } from "next/cache";
 import { db, drivers, achievements, riderStats } from "@/lib/db";
-import { eq, desc, or, like } from "drizzle-orm";
+import { eq, desc, or, like, sql } from "drizzle-orm";
 import { getCurrentUser, getCurrentAdmin } from "./auth.actions";
 
-export async function getDrivers(q?: string) {
+export async function getDrivers(q?: string, page: number = 1, limit: number = 10) {
   try {
     let query = db.select().from(drivers);
+    let countQuery = db.select({ count: sql<number>`count(*)` }).from(drivers);
     
     if (q) {
       const searchPattern = `%${q}%`;
-      query = query.where(
-        or(
-          like(drivers.fullName, searchPattern),
-          like(drivers.slug, searchPattern),
-          like(drivers.currentTeam, searchPattern),
-          like(drivers.racingCategory, searchPattern)
-        )
-      ) as any;
+      const searchCondition = or(
+        like(drivers.fullName, searchPattern),
+        like(drivers.slug, searchPattern),
+        like(drivers.currentTeam, searchPattern),
+        like(drivers.racingCategory, searchPattern)
+      );
+      query = query.where(searchCondition) as any;
+      countQuery = countQuery.where(searchCondition) as any;
     }
     
-    const allDrivers = await query.orderBy(desc(drivers.createdAt));
-    return allDrivers;
+    const offset = (page - 1) * limit;
+
+    const [allDrivers, [{ count }]] = await Promise.all([
+      query.orderBy(desc(drivers.createdAt)).limit(limit).offset(offset),
+      countQuery
+    ]);
+    
+    return { drivers: allDrivers, total: Number(count) };
   } catch (error) {
     console.error("Error fetching drivers:", error);
     throw new Error("Failed to fetch drivers");

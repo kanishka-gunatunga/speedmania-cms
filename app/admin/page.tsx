@@ -7,13 +7,13 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const blogs = await getBlogs();
-  const drivers = await getDrivers();
+  const { total: totalBlogs } = await getBlogs(undefined, 1, 1);
+  const { total: totalDrivers } = await getDrivers(undefined, 1, 1);
 
   const stats = [
     {
       title: "Total Blogs",
-      value: blogs.length,
+      value: totalBlogs,
       icon: FileText,
       description: "Published and drafts",
       color: "text-blue-600",
@@ -21,7 +21,7 @@ export default async function AdminDashboard() {
     },
     {
       title: "Active Drivers",
-      value: drivers.length,
+      value: totalDrivers,
       icon: Users,
       description: "Registered athletes",
       color: "text-green-600",

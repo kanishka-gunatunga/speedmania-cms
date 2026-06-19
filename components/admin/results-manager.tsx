@@ -29,6 +29,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { deleteAchievement, deleteRiderStat } from "@/lib/actions/results.actions";
+import { Pagination } from "@/components/admin/pagination";
 
 const YEARS = [2026, 2025, 2024];
 
@@ -78,7 +79,12 @@ interface RiderStatRow {
 
 interface ResultsManagerProps {
   initialAchievements: AchievementRow[];
+  totalAchievements: number;
+  racePage: number;
   initialRiderStats: RiderStatRow[];
+  totalRiderStats: number;
+  standingPage: number;
+  limit: number;
   drivers: DriverForSelect[];
   standingCategories: any[];
   currentYear: number;
@@ -87,7 +93,12 @@ interface ResultsManagerProps {
 
 export function ResultsManager({
   initialAchievements,
+  totalAchievements,
+  racePage,
   initialRiderStats,
+  totalRiderStats,
+  standingPage,
+  limit,
   drivers,
   standingCategories,
   currentYear,
@@ -322,6 +333,7 @@ export function ResultsManager({
               )}
 
               {!isPending && (
+                <>
                 <div className="rounded-xl border border-border/60 overflow-hidden bg-background/50">
                   <Table>
                     <TableHeader className="bg-muted/40">
@@ -404,6 +416,8 @@ export function ResultsManager({
                     </TableBody>
                   </Table>
                 </div>
+                <Pagination totalPages={Math.ceil(totalAchievements / limit)} currentPage={racePage} pageParam="racePage" />
+              </>
               )}
             </CardContent>
           </Card>
@@ -429,6 +443,7 @@ export function ResultsManager({
               )}
 
               {!isPending && (
+                <>
                 <div className="rounded-xl border border-border/60 overflow-hidden bg-background/50">
                   <Table>
                     <TableHeader className="bg-muted/40">
@@ -502,6 +517,8 @@ export function ResultsManager({
                     </TableBody>
                   </Table>
                 </div>
+                <Pagination totalPages={Math.ceil(totalRiderStats / limit)} currentPage={standingPage} pageParam="standingPage" />
+              </>
               )}
             </CardContent>
           </Card>
