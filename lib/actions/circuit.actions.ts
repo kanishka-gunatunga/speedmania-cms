@@ -43,10 +43,8 @@ export async function getCircuits(q?: string, page: number = 1, limit: number = 
 
     const offset = (page - 1) * limit;
 
-    const [allCircuits, [{ count }]] = await Promise.all([
-      query.orderBy(desc(circuits.createdAt)).limit(limit).offset(offset),
-      countQuery
-    ]);
+    const [{ count }] = await countQuery;
+    const allCircuits = await query.orderBy(desc(circuits.createdAt)).limit(limit).offset(offset);
 
     const mappings = await db
       .select({

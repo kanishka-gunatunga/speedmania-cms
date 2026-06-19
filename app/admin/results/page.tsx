@@ -21,13 +21,11 @@ export default async function ResultsAdminPage({ searchParams }: PageProps) {
   const standingPage = parseInt(resolvedParams.standingPage || "1");
   const limit = 10;
 
-  // Fetch all initial data concurrently in parallel
-  const [achievementsData, statsData, drivers, standingCategories] = await Promise.all([
-    getAchievements({ year, category: resolvedParams.category }, racePage, limit),
-    getRiderStats({ season: year, category: resolvedParams.category }, standingPage, limit),
-    getDriversForSelect(),
-    getCategories("standing"),
-  ]);
+  // Fetch all initial data sequentially to prevent connection pool exhaustion
+  const achievementsData = await getAchievements({ year, category: resolvedParams.category }, racePage, limit);
+  const statsData = await getRiderStats({ season: year, category: resolvedParams.category }, standingPage, limit);
+  const drivers = await getDriversForSelect();
+  const standingCategories = await getCategories("standing");
 
   // Set default category to the first available category if none is provided
   const category = resolvedParams.category || (standingCategories.length > 0 ? standingCategories[0].name : "Formula 1");
