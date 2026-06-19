@@ -94,6 +94,7 @@ const formSchema = z.object({
   careerPoints: z.string().refine(val => !val || parseFloat(val) >= 0, "Career points cannot be negative").optional(),
   careerPoles: z.coerce.number().min(0, "Career poles cannot be negative").optional(),
   biography: z.string().optional(),
+  biographyImage: z.string().url("Must be a valid URL").or(z.literal("")).optional(),
 });
 
 interface DriverFormValues {
@@ -129,6 +130,7 @@ interface DriverFormValues {
   careerPoints?: string;
   careerPoles?: number;
   biography?: string;
+  biographyImage?: string;
   achievements: {
     raceName: string;
     year?: number;
@@ -223,6 +225,7 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
       careerPoints: initialData?.careerPoints || "",
       careerPoles: initialData?.careerPoles || 0,
       biography: initialData?.biography || "",
+      biographyImage: initialData?.biographyImage || "",
     },
   });
 
@@ -430,6 +433,24 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                       <FormControl>
                         <BlogEditor value={field.value || ""} onChange={field.onChange} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="biographyImage"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Biography Section Image (Cover Photo)</FormLabel>
+                      <FormControl>
+                        <ImageUploadField
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          placeholder="https://media.formula1.com/..."
+                        />
+                      </FormControl>
+                      <FormDescription>Displayed as a square image next to the biography text.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

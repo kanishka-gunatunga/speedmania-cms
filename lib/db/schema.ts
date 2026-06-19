@@ -98,6 +98,7 @@ export const drivers = mysqlTable("drivers", {
   careerPoints: varchar("career_points", { length: 50 }),
   careerPoles: int("career_poles"),
   biography: longtext("biography"),
+  biographyImage: text("biography_image"),
   userId: varchar("user_id", { length: 191 }),
   pendingChanges: longtext("pending_changes"),
   teamId: varchar("team_id", { length: 191 }),
