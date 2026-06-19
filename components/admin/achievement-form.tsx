@@ -205,16 +205,15 @@ export function AchievementForm({
         {/* Year */}
         <div className="space-y-2">
           <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Year / Season</label>
-          <select
+          <Input
+            type="number"
+            placeholder="E.g., 2026"
             value={year}
             onChange={(e) => setYear(e.target.value)}
             disabled={isPending}
+            required
             className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold"
-          >
-            {YEARS.map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
+          />
         </div>
 
         {/* Category */}
