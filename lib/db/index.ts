@@ -13,13 +13,13 @@ const conn = globalForDb.conn ?? (
         uri: connectionString,
         enableKeepAlive: true,
         keepAliveInitialDelay: 10000,
-        connectionLimit: 10,
+        connectionLimit: 3,
       }) 
     : mysql.createPool({ 
         host: "localhost",
         enableKeepAlive: true,
         keepAliveInitialDelay: 10000,
-        connectionLimit: 10,
+        connectionLimit: 3,
       })
 );
 
