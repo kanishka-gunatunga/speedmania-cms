@@ -49,6 +49,11 @@ const NAV_ITEMS = [
     icon: Tag,
   },
   {
+    label: "Team Categories",
+    href: "/admin/team-categories",
+    icon: Tag,
+  },
+  {
     label: "Standing Categories",
     href: "/admin/standing-categories",
     icon: Trophy,

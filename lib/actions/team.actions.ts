@@ -1,32 +1,62 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db, teams, drivers } from "@/lib/db";
+import { db, teams, drivers, teamCategories, categories } from "@/lib/db";
 import { eq, desc, or, inArray, like, sql } from "drizzle-orm";
 
 export async function getTeams(q?: string, page: number = 1, limit: number = 10) {
   try {
-    let query = db.select().from(teams);
-    let countQuery = db.select({ count: sql<number>`count(*)` }).from(teams);
+    const whereCondition = q ? or(
+      like(teams.name, `%${q}%`),
+      like(teams.subtitle, `%${q}%`),
+      like(teams.slug, `%${q}%`),
+      like(teams.category, `%${q}%`)
+    ) : undefined;
 
-    if (q) {
-      const searchPattern = `%${q}%`;
-      const searchCondition = or(
-        like(teams.name, searchPattern),
-        like(teams.subtitle, searchPattern),
-        like(teams.slug, searchPattern),
-        like(teams.category, searchPattern)
-      );
-      query = query.where(searchCondition) as any;
-      countQuery = countQuery.where(searchCondition) as any;
-    }
+    const countResult = await db.select({ count: sql<number>`count(*)` })
+      .from(teams)
+      .where(whereCondition);
 
     const offset = (page - 1) * limit;
 
-    const [{ count }] = await countQuery;
-    const allTeams = await query.orderBy(desc(teams.createdAt)).limit(limit).offset(offset);
+    const allTeams = await db.select().from(teams)
+      .where(whereCondition)
+      .orderBy(desc(teams.createdAt))
+      .limit(limit)
+      .offset(offset);
 
-    return { teams: allTeams, total: Number(count) };
+    if (allTeams.length === 0) {
+      return { teams: [], total: Number(countResult[0].count) };
+    }
+
+    const teamIds = allTeams.map((t: any) => t.id);
+
+    const mappings = await db.select({
+      teamId: teamCategories.teamId,
+      category: {
+        id: categories.id,
+        name: categories.name,
+        slug: categories.slug,
+        parentId: categories.parentId,
+        type: categories.type
+      }
+    })
+    .from(teamCategories)
+    .innerJoin(categories, eq(teamCategories.categoryId, categories.id))
+    .where(inArray(teamCategories.teamId, teamIds));
+
+    const teamCatsMap = new Map();
+    mappings.forEach((m: any) => {
+      if (!teamCatsMap.has(m.teamId)) teamCatsMap.set(m.teamId, []);
+      teamCatsMap.get(m.teamId).push({ category: m.category });
+    });
+
+    const teamsWithCats = allTeams.map((t: any) => ({
+      ...t,
+      teamCategories: teamCatsMap.get(t.id) || []
+    }));
+
+    return { teams: teamsWithCats, total: Number(countResult[0].count) };
   } catch (error) {
     console.error("Error fetching teams:", error);
     throw new Error("Failed to fetch teams");
@@ -35,13 +65,32 @@ export async function getTeams(q?: string, page: number = 1, limit: number = 10)
 
 export async function getTeamById(idOrSlug: string) {
   try {
-    const team = await db.query.teams.findFirst({
-      where: or(eq(teams.id, idOrSlug), eq(teams.slug, idOrSlug)),
-      with: {
-        drivers: true,
-      },
-    });
-    return team || null;
+    const team = await db.select().from(teams)
+      .where(or(eq(teams.id, idOrSlug), eq(teams.slug, idOrSlug)))
+      .limit(1);
+
+    if (!team[0]) return null;
+
+    const teamDrivers = await db.select().from(drivers).where(eq(drivers.teamId, team[0].id));
+
+    const mappings = await db.select({
+      category: {
+        id: categories.id,
+        name: categories.name,
+        slug: categories.slug,
+        parentId: categories.parentId,
+        type: categories.type
+      }
+    })
+    .from(teamCategories)
+    .innerJoin(categories, eq(teamCategories.categoryId, categories.id))
+    .where(eq(teamCategories.teamId, team[0].id));
+
+    return {
+      ...team[0],
+      drivers: teamDrivers,
+      teamCategories: mappings
+    };
   } catch (error) {
     console.error("Error fetching team by ID:", error);
     throw new Error("Failed to fetch team");
@@ -65,7 +114,7 @@ async function generateUniqueSlug(baseSlug: string, currentId?: string): Promise
 export async function createTeam(data: any) {
   try {
     const id = crypto.randomUUID();
-    const { driverIds, roster, ...teamInfo } = data;
+    const { driverIds, roster, categoryIds, ...teamInfo } = data;
 
     const slug = await generateUniqueSlug(teamInfo.slug || teamInfo.name || "team");
     teamInfo.slug = slug;
@@ -78,7 +127,16 @@ export async function createTeam(data: any) {
         roster: roster ? JSON.stringify(roster) : "[]",
       });
 
-      // 2. Associate Drivers/Riders if any
+      // 2. Associate categories if any
+      if (categoryIds && categoryIds.length > 0) {
+        const catInserts = categoryIds.map((catId: string) => ({
+          teamId: id,
+          categoryId: catId,
+        }));
+        await tx.insert(teamCategories).values(catInserts);
+      }
+
+      // 3. Associate Drivers/Riders if any
       if (driverIds && driverIds.length > 0) {
         await tx
           .update(drivers)
@@ -104,7 +162,7 @@ export async function createTeam(data: any) {
 
 export async function updateTeam(id: string, data: any) {
   try {
-    const { driverIds, roster, ...teamInfo } = data;
+    const { driverIds, roster, categoryIds, ...teamInfo } = data;
 
     const slug = await generateUniqueSlug(teamInfo.slug || teamInfo.name || "team", id);
     teamInfo.slug = slug;
@@ -120,13 +178,23 @@ export async function updateTeam(id: string, data: any) {
         })
         .where(eq(teams.id, id));
 
-      // 2. Unlink previously associated drivers
+      // 2. Update Categories
+      await tx.delete(teamCategories).where(eq(teamCategories.teamId, id));
+      if (categoryIds && categoryIds.length > 0) {
+        const catInserts = categoryIds.map((catId: string) => ({
+          teamId: id,
+          categoryId: catId,
+        }));
+        await tx.insert(teamCategories).values(catInserts);
+      }
+
+      // 3. Unlink previously associated drivers
       await tx
         .update(drivers)
         .set({ teamId: null, currentTeam: null })
         .where(eq(drivers.teamId, id));
 
-      // 3. Link newly selected drivers
+      // 4. Link newly selected drivers
       if (driverIds && driverIds.length > 0) {
         await tx
           .update(drivers)
