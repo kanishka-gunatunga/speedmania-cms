@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 export const dynamic = "force-dynamic";
 
 export default async function NewTeamPage() {
-  const drivers = await getDrivers();
+  const { drivers } = await getDrivers(undefined, 1, 1000);
 
   // Filter out drivers that are approved (or just allow linking any driver/rider)
   const approvedDrivers = drivers.filter(d => d.status === "approved" || !d.status);
