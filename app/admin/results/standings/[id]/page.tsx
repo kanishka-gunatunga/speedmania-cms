@@ -1,4 +1,5 @@
 import { getDriversForSelect, getRiderStatById } from "@/lib/actions/results.actions";
+import { getCategories } from "@/lib/actions/category.actions";
 import { RiderStatForm } from "@/components/admin/rider-stat-form";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Award } from "lucide-react";
@@ -18,9 +19,10 @@ export default async function EditRiderStatPage({ params }: PageProps) {
   const { id } = await params;
 
   // Fetch standings details and approved drivers in parallel
-  const [riderStat, drivers] = await Promise.all([
+  const [riderStat, drivers, standingCategories] = await Promise.all([
     getRiderStatById(id),
     getDriversForSelect(),
+    getCategories("standing"),
   ]);
 
   if (!riderStat) {
@@ -51,6 +53,7 @@ export default async function EditRiderStatPage({ params }: PageProps) {
         <CardContent>
           <RiderStatForm
             drivers={drivers}
+            standingCategories={standingCategories as any}
             initialData={riderStat}
           />
         </CardContent>

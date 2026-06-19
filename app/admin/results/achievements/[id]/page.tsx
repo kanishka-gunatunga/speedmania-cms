@@ -1,4 +1,5 @@
 import { getDriversForSelect, getAchievementById } from "@/lib/actions/results.actions";
+import { getCategories } from "@/lib/actions/category.actions";
 import { AchievementForm } from "@/components/admin/achievement-form";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Trophy } from "lucide-react";
@@ -18,9 +19,10 @@ export default async function EditAchievementPage({ params }: PageProps) {
   const { id } = await params;
 
   // Fetch achievement details and approved drivers in parallel
-  const [achievement, drivers] = await Promise.all([
+  const [achievement, drivers, standingCategories] = await Promise.all([
     getAchievementById(id),
     getDriversForSelect(),
+    getCategories("standing"),
   ]);
 
   if (!achievement) {
@@ -51,6 +53,7 @@ export default async function EditAchievementPage({ params }: PageProps) {
         <CardContent>
           <AchievementForm
             drivers={drivers}
+            standingCategories={standingCategories as any}
             initialData={achievement}
           />
         </CardContent>

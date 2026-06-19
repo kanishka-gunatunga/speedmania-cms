@@ -1,4 +1,5 @@
 import { getDriversForSelect } from "@/lib/actions/results.actions";
+import { getCategories } from "@/lib/actions/category.actions";
 import { RiderStatForm } from "@/components/admin/rider-stat-form";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
@@ -20,6 +21,7 @@ export default async function NewRiderStatPage({ searchParams }: PageProps) {
   const category = resolvedParams.category || "Formula 1";
 
   const drivers = await getDriversForSelect();
+  const standingCategories = await getCategories("standing");
 
   return (
     <div className="container mx-auto p-8 max-w-4xl">
@@ -42,6 +44,7 @@ export default async function NewRiderStatPage({ searchParams }: PageProps) {
         <CardContent>
           <RiderStatForm
             drivers={drivers}
+            standingCategories={standingCategories as any}
             defaultYear={year}
             defaultCategory={category}
           />
