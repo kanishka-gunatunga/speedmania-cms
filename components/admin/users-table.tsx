@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2, Users, ShieldAlert } from "lucide-react";
+import { Pagination } from "@/components/admin/pagination";
 
 interface User {
   id: string;
@@ -23,9 +24,11 @@ interface User {
 
 interface UsersTableProps {
   initialUsers: User[];
+  page: number;
+  totalPages: number;
 }
 
-export function UsersTable({ initialUsers }: UsersTableProps) {
+export function UsersTable({ initialUsers, page, totalPages }: UsersTableProps) {
   const [usersList, setUsersList] = useState<User[]>(initialUsers);
   const [isPending, startTransition] = useTransition();
 
@@ -123,6 +126,7 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
             </Table>
           </div>
         )}
+        <Pagination totalPages={totalPages} currentPage={page} />
       </CardContent>
     </Card>
   );

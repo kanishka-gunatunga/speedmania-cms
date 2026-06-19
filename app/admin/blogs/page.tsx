@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { SearchBar } from "@/components/admin/search-bar";
+import { Pagination } from "@/components/admin/pagination";
 import {
   Table,
   TableBody,
@@ -18,13 +19,17 @@ export const dynamic = 'force-dynamic';
 interface PageProps {
   searchParams: Promise<{
     q?: string;
+    page?: string;
   }>;
 }
 
 export default async function BlogsPage({ searchParams }: PageProps) {
   const resolvedParams = await searchParams;
   const q = resolvedParams.q;
-  const blogs = await getBlogs(q);
+  const page = parseInt(resolvedParams.page || "1");
+  const limit = 10;
+  
+  const { blogs, total } = await getBlogs(q, page, limit);
 
   return (
     <div className="container mx-auto p-8 max-w-6xl">
@@ -45,7 +50,7 @@ export default async function BlogsPage({ searchParams }: PageProps) {
         <CardHeader>
           <CardTitle>All Posts</CardTitle>
           <CardDescription>
-            You have {blogs.length} published or draft blog posts.
+            You have {total} published or draft blog posts.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -107,6 +112,7 @@ export default async function BlogsPage({ searchParams }: PageProps) {
               </TableBody>
             </Table>
           </div>
+          <Pagination totalPages={Math.ceil(total / limit)} currentPage={page} />
         </CardContent>
       </Card>
     </div>

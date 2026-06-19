@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2, Shield } from "lucide-react";
 import { SearchBar } from "@/components/admin/search-bar";
+import { Pagination } from "@/components/admin/pagination";
 import {
   Table,
   TableBody,
@@ -18,13 +19,17 @@ export const dynamic = 'force-dynamic';
 interface PageProps {
   searchParams: Promise<{
     q?: string;
+    page?: string;
   }>;
 }
 
 export default async function TeamsAdminPage({ searchParams }: PageProps) {
   const resolvedParams = await searchParams;
   const q = resolvedParams.q;
-  const teams = await getTeams(q);
+  const page = parseInt(resolvedParams.page || "1");
+  const limit = 10;
+  
+  const { teams, total } = await getTeams(q, page, limit);
 
   return (
     <div className="container mx-auto p-8 max-w-6xl">
@@ -45,7 +50,7 @@ export default async function TeamsAdminPage({ searchParams }: PageProps) {
         <CardHeader>
           <CardTitle>All Teams</CardTitle>
           <CardDescription>
-            You have {teams.length} registered constructor teams.
+            You have {total} registered constructor teams.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -112,6 +117,7 @@ export default async function TeamsAdminPage({ searchParams }: PageProps) {
               </TableBody>
             </Table>
           </div>
+          <Pagination totalPages={Math.ceil(total / limit)} currentPage={page} />
         </CardContent>
       </Card>
     </div>

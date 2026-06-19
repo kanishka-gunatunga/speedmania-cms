@@ -1,8 +1,9 @@
 import { getCircuits, deleteCircuit } from "@/lib/actions/circuit.actions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, Globe } from "lucide-react";
+import { Plus, Edit, Trash2, MapPin, Globe } from "lucide-react";
 import { SearchBar } from "@/components/admin/search-bar";
+import { Pagination } from "@/components/admin/pagination";
 import {
   Table,
   TableBody,
@@ -18,13 +19,17 @@ export const dynamic = 'force-dynamic';
 interface PageProps {
   searchParams: Promise<{
     q?: string;
+    page?: string;
   }>;
 }
 
-export default async function CircuitsPage({ searchParams }: PageProps) {
+export default async function CircuitsAdminPage({ searchParams }: PageProps) {
   const resolvedParams = await searchParams;
   const q = resolvedParams.q;
-  const circuitsList = await getCircuits(q);
+  const page = parseInt(resolvedParams.page || "1");
+  const limit = 10;
+  
+  const { circuits, total } = await getCircuits(q, page, limit);
 
   return (
     <div className="container mx-auto p-8 max-w-6xl">
@@ -45,7 +50,7 @@ export default async function CircuitsPage({ searchParams }: PageProps) {
         <CardHeader>
           <CardTitle>All Circuits</CardTitle>
           <CardDescription>
-            You have {circuitsList.length} circuits in your database.
+            You have {total} racing circuits in your database.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -62,14 +67,14 @@ export default async function CircuitsPage({ searchParams }: PageProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {circuitsList.length === 0 ? (
+                {circuits.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center text-muted-foreground italic">
                       No circuits found. Click "New Circuit" to get started.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  circuitsList.map((circuit) => (
+                  circuits.map((circuit) => (
                     <TableRow key={circuit.id} className="hover:bg-muted/20 transition-colors">
                       <TableCell className="font-semibold">
                         <div className="flex items-center gap-3">
@@ -121,6 +126,7 @@ export default async function CircuitsPage({ searchParams }: PageProps) {
               </TableBody>
             </Table>
           </div>
+          <Pagination totalPages={Math.ceil(total / limit)} currentPage={page} />
         </CardContent>
       </Card>
     </div>

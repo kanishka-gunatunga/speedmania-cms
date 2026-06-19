@@ -2,26 +2,33 @@
 
 import { revalidatePath } from "next/cache";
 import { db, blogs, blogCategories, categories } from "@/lib/db";
-import { desc, eq, and, or, like } from "drizzle-orm";
+import { desc, eq, and, or, like, sql } from "drizzle-orm";
 
-export async function getBlogs(q?: string) {
+export async function getBlogs(q?: string, page: number = 1, limit: number = 10) {
   try {
     let query = db.select().from(blogs);
+    let countQuery = db.select({ count: sql<number>`count(*)` }).from(blogs);
 
     if (q) {
       const searchPattern = `%${q}%`;
-      query = query.where(
-        or(
-          like(blogs.title, searchPattern),
-          like(blogs.slug, searchPattern),
-          like(blogs.excerpt, searchPattern),
-          like(blogs.author, searchPattern)
-        )
-      ) as any;
+      const searchCondition = or(
+        like(blogs.title, searchPattern),
+        like(blogs.slug, searchPattern),
+        like(blogs.excerpt, searchPattern),
+        like(blogs.author, searchPattern)
+      );
+      query = query.where(searchCondition) as any;
+      countQuery = countQuery.where(searchCondition) as any;
     }
 
-    const allBlogs = await query.orderBy(desc(blogs.createdAt));
-    return allBlogs;
+    const offset = (page - 1) * limit;
+    
+    const [allBlogs, [{ count }]] = await Promise.all([
+      query.orderBy(desc(blogs.createdAt)).limit(limit).offset(offset),
+      countQuery
+    ]);
+
+    return { blogs: allBlogs, total: Number(count) };
   } catch (error) {
     console.error("Error fetching blogs:", error);
     throw new Error("Failed to fetch blogs");

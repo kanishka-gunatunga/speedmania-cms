@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2, User, Check, X } from "lucide-react";
 import { SearchBar } from "@/components/admin/search-bar";
+import { Pagination } from "@/components/admin/pagination";
 import {
   Table,
   TableBody,
@@ -18,13 +19,17 @@ export const dynamic = 'force-dynamic';
 interface PageProps {
   searchParams: Promise<{
     q?: string;
+    page?: string;
   }>;
 }
 
 export default async function DriversPage({ searchParams }: PageProps) {
   const resolvedParams = await searchParams;
   const q = resolvedParams.q;
-  const drivers = await getDrivers(q);
+  const page = parseInt(resolvedParams.page || "1");
+  const limit = 10;
+  
+  const { drivers, total } = await getDrivers(q, page, limit);
 
   return (
     <div className="container mx-auto p-8 max-w-6xl">
@@ -45,7 +50,7 @@ export default async function DriversPage({ searchParams }: PageProps) {
         <CardHeader>
           <CardTitle>All Athletes</CardTitle>
           <CardDescription>
-            You have {drivers.length} registered drivers and riders.
+            You have {total} registered drivers and riders.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -145,6 +150,7 @@ export default async function DriversPage({ searchParams }: PageProps) {
               </TableBody>
             </Table>
           </div>
+          <Pagination totalPages={Math.ceil(total / limit)} currentPage={page} />
         </CardContent>
       </Card>
     </div>

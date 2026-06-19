@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db, achievements, riderStats, drivers } from "@/lib/db";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq, and, desc, asc, sql } from "drizzle-orm";
 
 // ──────────────────────────────────────────
 // Helper: Drivers for Dropdowns
@@ -34,7 +34,7 @@ export async function getDriversForSelect() {
 // Achievements (Race Results) Actions
 // ──────────────────────────────────────────
 
-export async function getAchievements(filters: { year?: number; category?: string } = {}) {
+export async function getAchievements(filters: { year?: number; category?: string } = {}, page: number = 1, limit: number = 10) {
   try {
     const conditions = [];
     if (filters.year) {
@@ -61,11 +61,20 @@ export async function getAchievements(filters: { year?: number; category?: strin
       .from(achievements)
       .leftJoin(drivers, eq(achievements.driverId, drivers.id));
 
-    const results = conditions.length > 0 
-      ? await query.where(and(...conditions)).orderBy(desc(achievements.year), achievements.raceName, achievements.position)
-      : await query.orderBy(desc(achievements.year), achievements.raceName, achievements.position);
+    let countQuery = db.select({ count: sql<number>`count(*)` }).from(achievements);
+    if (conditions.length > 0) {
+      query.where(and(...conditions));
+      countQuery.where(and(...conditions));
+    }
 
-    return results;
+    const offset = (page - 1) * limit;
+
+    const [results, [{ count }]] = await Promise.all([
+      query.orderBy(desc(achievements.year), achievements.raceName, achievements.position).limit(limit).offset(offset),
+      countQuery
+    ]);
+
+    return { achievements: results, total: Number(count) };
   } catch (error) {
     console.error("Error fetching achievements:", error);
     throw new Error("Failed to fetch achievements");
@@ -158,7 +167,7 @@ export async function deleteAchievement(id: string) {
 // Rider Stats (Driver Standings Stats) Actions
 // ──────────────────────────────────────────
 
-export async function getRiderStats(filters: { season?: number; category?: string } = {}) {
+export async function getRiderStats(filters: { season?: number; category?: string } = {}, page: number = 1, limit: number = 10) {
   try {
     const conditions = [];
     if (filters.season) {
@@ -191,11 +200,20 @@ export async function getRiderStats(filters: { season?: number; category?: strin
       .from(riderStats)
       .leftJoin(drivers, eq(riderStats.driverId, drivers.id));
 
-    const results = conditions.length > 0
-      ? await query.where(and(...conditions)).orderBy(desc(riderStats.season), desc(riderStats.points))
-      : await query.orderBy(desc(riderStats.season), desc(riderStats.points));
+    let countQuery = db.select({ count: sql<number>`count(*)` }).from(riderStats);
+    if (conditions.length > 0) {
+      query.where(and(...conditions));
+      countQuery.where(and(...conditions));
+    }
 
-    return results;
+    const offset = (page - 1) * limit;
+
+    const [results, [{ count }]] = await Promise.all([
+      query.orderBy(desc(riderStats.season), desc(riderStats.points)).limit(limit).offset(offset),
+      countQuery
+    ]);
+
+    return { riderStats: results, total: Number(count) };
   } catch (error) {
     console.error("Error fetching rider stats:", error);
     throw new Error("Failed to fetch standings stats");

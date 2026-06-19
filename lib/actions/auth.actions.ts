@@ -1,7 +1,7 @@
 "use server";
 
 import { db, users } from "@/lib/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { verifyPassword, hashPassword } from "@/lib/auth/crypto.server";
@@ -91,18 +91,26 @@ export async function getCurrentAdmin() {
   }
 }
 
-export async function getUsersList() {
+export async function getUsersList(page: number = 1, limit: number = 10) {
   try {
-    const list = await db
-      .select({
-        id: users.id,
-        username: users.username,
-        role: users.role,
-        createdAt: users.createdAt,
-      })
-      .from(users)
-      .orderBy(desc(users.createdAt));
-    return list;
+    const offset = (page - 1) * limit;
+
+    const [list, [{ count }]] = await Promise.all([
+      db
+        .select({
+          id: users.id,
+          username: users.username,
+          role: users.role,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .orderBy(desc(users.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ count: sql<number>`count(*)` }).from(users)
+    ]);
+
+    return { users: list, total: Number(count) };
   } catch (error) {
     console.error("[AUTH_GET_USERS_LIST_ERROR]", error);
     throw new Error("Failed to fetch users");
