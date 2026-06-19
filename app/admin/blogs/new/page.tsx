@@ -8,7 +8,7 @@ import { getCategories } from "@/lib/actions/category.actions";
 export const dynamic = "force-dynamic";
 
 export default async function NewBlogPage() {
-  const categoriesList = await getCategories();
+  const categoriesList = await getCategories("blog");
 
   return (
     <div className="container mx-auto p-8 max-w-4xl">

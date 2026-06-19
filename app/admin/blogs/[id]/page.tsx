@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 export default async function EditBlogPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const blog = await getBlogById(resolvedParams.id);
-  const categoriesList = await getCategories();
+  const categoriesList = await getCategories("blog");
 
   if (!blog) {
     notFound();
