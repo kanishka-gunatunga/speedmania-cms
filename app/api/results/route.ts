@@ -9,8 +9,11 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const year = parseInt(searchParams.get("year") || "2026");
-    const category = searchParams.get("category") || "Formula 1";
-    const region = searchParams.get("region") || "intl";
+    const category = searchParams.get("category");
+
+    if (!category) {
+      return NextResponse.json([]);
+    }
 
     // Fetch all achievements for the given year and category, joining with driver info
     const rows = await db
@@ -37,13 +40,7 @@ export async function GET(request: Request) {
         and(
           eq(achievements.year, year),
           eq(achievements.category, category),
-          eq(drivers.status, "approved"),
-          region === "sl"
-            ? or(
-                eq(drivers.flagCode, "LK"),
-                like(drivers.country, "%Sri Lanka%")
-              )
-            : undefined
+          eq(drivers.status, "approved")
         )
       )
       .orderBy(achievements.raceName, achievements.position);

@@ -1,5 +1,5 @@
 import { db, drivers, riderStats } from "@/lib/db";
-import { desc, eq, and } from "drizzle-orm";
+import { desc, eq, and, or } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     
     let category = searchParams.get("category");
     if (!category) {
-      category = type === "rider" ? "MotoGP" : "Formula 1";
+      return NextResponse.json([]);
     }
 
     const whereConditions = [eq(drivers.status, "approved")];
@@ -21,7 +21,13 @@ export async function GET(request: Request) {
     }
 
     if (category) {
-      whereConditions.push(eq(drivers.racingCategory, category));
+      const categoryFilter = or(
+        eq(drivers.racingCategory, category),
+        eq(riderStats.category, category)
+      );
+      if (categoryFilter) {
+        whereConditions.push(categoryFilter);
+      }
     }
 
     const data = await db

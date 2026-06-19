@@ -49,6 +49,11 @@ const NAV_ITEMS = [
     icon: Tag,
   },
   {
+    label: "Standing Categories",
+    href: "/admin/standing-categories",
+    icon: Trophy,
+  },
+  {
     label: "Teams",
     href: "/admin/teams",
     icon: Shield,
@@ -108,7 +113,7 @@ export function AdminSidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 p-4 space-y-2 mt-4">
+      <nav className="flex-1 overflow-y-auto p-4 space-y-2 mt-4">
         {NAV_ITEMS.map((item) => {
           const isActive = item.href === "/admin"
             ? pathname === "/admin"
@@ -135,13 +140,13 @@ export function AdminSidebar() {
       </nav>
 
       <div className="p-4 border-t space-y-2">
-        <Link
+        {/* <Link
           href="/admin/settings"
           className="flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-colors group"
         >
           <Settings className="w-5 h-5 group-hover:rotate-45 transition-transform duration-500" />
           <span className="font-medium">Settings</span>
-        </Link>
+        </Link> */}
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-colors group cursor-pointer"

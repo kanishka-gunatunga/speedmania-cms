@@ -39,9 +39,9 @@ interface RiderStatFormProps {
   initialData?: RiderStatData | null;
   defaultYear?: number;
   defaultCategory?: string;
+  standingCategories: any[];
 }
 
-const CATEGORIES = ["Formula 1", "MotoGP", "Sri Lanka Racing", "Rally", "Supercars", "Karting"];
 const YEARS = [2026, 2025, 2024];
 
 export function RiderStatForm({
@@ -49,6 +49,7 @@ export function RiderStatForm({
   initialData,
   defaultYear = 2026,
   defaultCategory = "Formula 1",
+  standingCategories = [],
 }: RiderStatFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -169,16 +170,46 @@ export function RiderStatForm({
 
         {/* Category */}
         <div className="space-y-2">
-          <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Category</label>
+          <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Category / Racing Type</label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             disabled={isPending}
             className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold"
           >
-            {CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
+            {standingCategories
+              .filter((c) => !c.parentId)
+              .map((mainCat) => {
+                const subs = standingCategories.filter((sub) => sub.parentId === mainCat.id);
+                if (subs.length === 0) {
+                  return (
+                    <option key={mainCat.id} value={mainCat.name}>
+                      {mainCat.name}
+                    </option>
+                  );
+                }
+                return (
+                  <optgroup key={mainCat.id} label={mainCat.name}>
+                    {subs.map((sub) => (
+                      <option key={sub.id} value={sub.name}>
+                        {sub.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                );
+              })}
+            {/* Fallback for categories without a parent if any */}
+            {standingCategories
+              .filter(
+                (c) =>
+                  c.parentId &&
+                  !standingCategories.some((m) => !m.parentId && m.id === c.parentId)
+              )
+              .map((sub) => (
+                <option key={sub.id} value={sub.name}>
+                  {sub.name}
+                </option>
+              ))}
           </select>
         </div>
 

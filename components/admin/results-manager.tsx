@@ -30,7 +30,6 @@ import {
 } from "lucide-react";
 import { deleteAchievement, deleteRiderStat } from "@/lib/actions/results.actions";
 
-const CATEGORIES = ["Formula 1", "MotoGP", "Sri Lanka Racing", "Rally", "Supercars", "Karting"];
 const YEARS = [2026, 2025, 2024];
 
 interface DriverForSelect {
@@ -81,6 +80,7 @@ interface ResultsManagerProps {
   initialAchievements: AchievementRow[];
   initialRiderStats: RiderStatRow[];
   drivers: DriverForSelect[];
+  standingCategories: any[];
   currentYear: number;
   currentCategory: string;
 }
@@ -89,6 +89,7 @@ export function ResultsManager({
   initialAchievements,
   initialRiderStats,
   drivers,
+  standingCategories,
   currentYear,
   currentCategory,
 }: ResultsManagerProps) {
@@ -98,7 +99,6 @@ export function ResultsManager({
   // Filters State
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [selectedCategory, setSelectedCategory] = useState<string>(currentCategory);
-  const [regionFilter, setRegionFilter] = useState<"all" | "sl">("all");
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<string>("races");
@@ -110,29 +110,8 @@ export function ResultsManager({
     router.push(`/admin/results?year=${year}&category=${encodeURIComponent(cat)}`);
   };
 
-  // ── Filter by Region (SL vs All) on the Client side for visual flexibility ──
-  const isSriLankanDriver = (driverId: string) => {
-    const drv = drivers.find((d) => d.id === driverId);
-    if (!drv) return false;
-    return (
-      (drv.flagCode || "").toUpperCase() === "LK" ||
-      (drv.country || "").toLowerCase().includes("sri lanka")
-    );
-  };
-
-  const filteredAchievements = initialAchievements.filter((ach) => {
-    if (regionFilter === "sl") {
-      return isSriLankanDriver(ach.driverId);
-    }
-    return true;
-  });
-
-  const filteredRiderStats = initialRiderStats.filter((stat) => {
-    if (regionFilter === "sl") {
-      return isSriLankanDriver(stat.driverId);
-    }
-    return true;
-  });
+  const filteredAchievements = initialAchievements;
+  const filteredRiderStats = initialRiderStats;
 
   // ── Handle Achievement Delete ──
   const handleDeleteAchievement = (id: string) => {
@@ -212,34 +191,40 @@ export function ResultsManager({
               onChange={(e) => handleFilterChange(selectedYear, e.target.value)}
               className="bg-background border border-border rounded-xl px-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all max-w-[160px] md:max-w-none"
             >
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
+              {standingCategories
+                .filter((c) => !c.parentId)
+                .map((mainCat) => {
+                  const subs = standingCategories.filter((sub) => sub.parentId === mainCat.id);
+                  if (subs.length === 0) {
+                    return (
+                      <option key={mainCat.id} value={mainCat.name}>
+                        {mainCat.name}
+                      </option>
+                    );
+                  }
+                  return (
+                    <optgroup key={mainCat.id} label={mainCat.name}>
+                      {subs.map((sub) => (
+                        <option key={sub.id} value={sub.name}>
+                          {sub.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  );
+                })}
+              {/* Fallback for categories without a parent if any */}
+              {standingCategories
+                .filter(
+                  (c) =>
+                    c.parentId &&
+                    !standingCategories.some((m) => !m.parentId && m.id === c.parentId)
+                )
+                .map((sub) => (
+                  <option key={sub.id} value={sub.name}>
+                    {sub.name}
+                  </option>
+                ))}
             </select>
-          </div>
-
-          {/* Region Toggle */}
-          <div className="flex items-center gap-0 border border-border rounded-xl overflow-hidden bg-background">
-            <button
-              onClick={() => setRegionFilter("all")}
-              className={`px-3 py-1.5 text-xs font-bold transition-all ${regionFilter === "all"
-                ? "bg-primary text-primary-foreground shadow-md"
-                : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              All Intl
-            </button>
-            <button
-              onClick={() => setRegionFilter("sl")}
-              className={`px-3 py-1.5 text-xs font-bold transition-all ${regionFilter === "sl"
-                ? "bg-primary text-primary-foreground shadow-md"
-                : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              🇱🇰 SL Only
-            </button>
           </div>
         </div>
       </div>
@@ -363,7 +348,6 @@ export function ResultsManager({
                         </TableRow>
                       ) : (
                         filteredAchievements.map((ach) => {
-                          const isSL = isSriLankanDriver(ach.driverId);
                           return (
                             <TableRow key={ach.id} className="hover:bg-muted/10 group transition-colors">
                               <TableCell className="font-bold text-foreground/90">
@@ -376,11 +360,6 @@ export function ResultsManager({
                               <TableCell className="font-semibold">
                                 <div className="flex items-center gap-2">
                                   {ach.driverName || "Unknown Athlete"}
-                                  {isSL && (
-                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 uppercase font-orbitron">
-                                      🇱🇰 SL
-                                    </span>
-                                  )}
                                 </div>
                               </TableCell>
                               <TableCell className="font-medium text-muted-foreground/80">{ach.team || "—"}</TableCell>
@@ -478,7 +457,6 @@ export function ResultsManager({
                         </TableRow>
                       ) : (
                         filteredRiderStats.map((stat, idx) => {
-                          const isSL = isSriLankanDriver(stat.driverId);
                           const rank = stat.position || (idx + 1).toString();
                           return (
                             <TableRow key={stat.id} className="hover:bg-muted/10 group transition-colors">
@@ -488,11 +466,6 @@ export function ResultsManager({
                               <TableCell className="font-semibold">
                                 <div className="flex items-center gap-2">
                                   {stat.driverName || "Unknown Athlete"}
-                                  {isSL && (
-                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 uppercase font-orbitron">
-                                      🇱🇰 SL
-                                    </span>
-                                  )}
                                 </div>
                               </TableCell>
                               <TableCell className="font-medium text-muted-foreground">{stat.bike || "—"}</TableCell>
