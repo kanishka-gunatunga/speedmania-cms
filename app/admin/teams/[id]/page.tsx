@@ -1,5 +1,6 @@
 import { getTeamById } from "@/lib/actions/team.actions";
 import { getDrivers } from "@/lib/actions/driver.actions";
+import { getCategories } from "@/lib/actions/category.actions";
 import { TeamForm } from "@/components/teams/team-form";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
@@ -13,6 +14,7 @@ export default async function EditTeamPage({ params }: { params: Promise<{ id: s
   const resolvedParams = await params;
   const team = await getTeamById(resolvedParams.id);
   const { drivers } = await getDrivers(undefined, 1, 1000);
+  const categories = await getCategories("team");
 
   if (!team) {
     notFound();
@@ -40,7 +42,7 @@ export default async function EditTeamPage({ params }: { params: Promise<{ id: s
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <TeamForm initialData={team} availableDrivers={approvedDrivers} />
+          <TeamForm initialData={team} availableDrivers={approvedDrivers} availableCategories={categories} />
         </CardContent>
       </Card>
     </div>

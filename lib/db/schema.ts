@@ -46,6 +46,14 @@ export const circuitCategories = mysqlTable("circuit_categories", {
 ]);
 
 
+// TEAM CATEGORIES JUNCTION TABLE
+export const teamCategories = mysqlTable("team_categories", {
+  teamId: varchar("team_id", { length: 191 }).notNull(),
+  categoryId: varchar("category_id", { length: 191 }).notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.teamId, table.categoryId] })
+]);
+
 // DRIVERS TABLE
 export const drivers = mysqlTable("drivers", {
   id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -175,6 +183,7 @@ export const blogsRelations = relations(blogs, ({ many }) => ({
 export const categoriesRelations = relations(categories, ({ many, one }) => ({
   blogCategories: many(blogCategories),
   circuitCategories: many(circuitCategories),
+  teamCategories: many(teamCategories),
   parent: one(categories, {
     fields: [categories.parentId],
     references: [categories.id],
@@ -242,13 +251,24 @@ export const circuitFaqsRelations = relations(circuitFaqs, ({ one }) => ({
   }),
 }));
 
+export const teamCategoriesRelations = relations(teamCategories, ({ one }) => ({
+  team: one(teams, {
+    fields: [teamCategories.teamId],
+    references: [teams.id],
+  }),
+  category: one(categories, {
+    fields: [teamCategories.categoryId],
+    references: [categories.id],
+  }),
+}));
+
 // TEAMS TABLE
 export const teams = mysqlTable("teams", {
   id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: varchar("name", { length: 255 }).notNull(),
   subtitle: varchar("subtitle", { length: 255 }),
   slug: varchar("slug", { length: 191 }).notNull().unique(),
-  category: varchar("category", { length: 100 }).notNull(), // e.g. "Formula 1" | "Rally" | "Supercars" | "Karting"
+  category: varchar("category", { length: 100 }), // Deprecated: use team_categories relation instead
   logo: text("logo"), // image URL or "shield"
   initials: varchar("initials", { length: 10 }),
   gradient: text("gradient"),
@@ -288,6 +308,7 @@ export const teams = mysqlTable("teams", {
 
 export const teamsRelations = relations(teams, ({ many }) => ({
   drivers: many(drivers),
+  teamCategories: many(teamCategories),
 }));
 
 // USERS TABLE

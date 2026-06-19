@@ -1,4 +1,5 @@
 import { getDrivers } from "@/lib/actions/driver.actions";
+import { getCategories } from "@/lib/actions/category.actions";
 import { TeamForm } from "@/components/teams/team-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -6,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function NewTeamPage() {
   const { drivers } = await getDrivers(undefined, 1, 1000);
+  const categories = await getCategories("team");
 
   // Filter out drivers that are approved (or just allow linking any driver/rider)
   const approvedDrivers = drivers.filter(d => d.status === "approved" || !d.status);
@@ -25,7 +27,7 @@ export default async function NewTeamPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <TeamForm availableDrivers={approvedDrivers} />
+          <TeamForm availableDrivers={approvedDrivers} availableCategories={categories} />
         </CardContent>
       </Card>
     </div>

@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { useTransition, useState, useEffect } from "react";
-import { Plus, Trash2, Shield, BarChart3, Users, HelpCircle } from "lucide-react";
+import { Plus, Trash2, Shield, BarChart3, Users, HelpCircle, ChevronDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -34,7 +34,7 @@ const formSchema = z.object({
   name: z.string().min(2, "Name is required"),
   slug: z.string().min(1, "Slug is required"),
   subtitle: z.string().optional().default(""),
-  category: z.string().min(1, "Category is required"),
+  categoryIds: z.array(z.string()).default([]),
   logo: z.string().optional().default(""),
   initials: z.string().optional().default(""),
   gradient: z.string().optional().default("linear-gradient(270deg, #1CFEFD 0%, #009695 100%)"),
@@ -77,12 +77,14 @@ type TeamFormValues = z.infer<typeof formSchema>;
 interface TeamFormProps {
   initialData?: any;
   availableDrivers: any[];
+  availableCategories?: any[];
 }
 
-export function TeamForm({ initialData, availableDrivers }: TeamFormProps) {
+export function TeamForm({ initialData, availableDrivers, availableCategories = [] }: TeamFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [isCategoryExpanded, setIsCategoryExpanded] = useState(false);
 
   // Parse initial roster if any
   let initialRoster = [];
@@ -103,7 +105,7 @@ export function TeamForm({ initialData, availableDrivers }: TeamFormProps) {
       name: initialData?.name ?? "",
       slug: initialData?.slug ?? "",
       subtitle: initialData?.subtitle ?? "",
-      category: initialData?.category ?? "Formula 1",
+      categoryIds: initialData?.teamCategories?.map((tc: any) => tc.categoryId || tc.category?.id) || [],
       logo: initialData?.logo ?? "",
       initials: initialData?.initials ?? "",
       gradient: initialData?.gradient ?? "linear-gradient(270deg, #1CFEFD 0%, #009695 100%)",
@@ -242,24 +244,140 @@ export function TeamForm({ initialData, availableDrivers }: TeamFormProps) {
                 />
                 <FormField
                   control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category <span className="text-destructive">*</span></FormLabel>
-                      <FormControl>
-                        <select
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          {...field}
+                  name="categoryIds"
+                  render={({ field }) => {
+                    const parentCategories = availableCategories.filter((c) => !c.parentId);
+                    const childCategoriesMap = availableCategories.reduce((acc, cat) => {
+                      if (cat.parentId) {
+                        if (!acc[cat.parentId]) acc[cat.parentId] = [];
+                        acc[cat.parentId].push(cat);
+                      }
+                      return acc;
+                    }, {} as Record<string, typeof availableCategories>);
+
+                    const selectedCategoryNames = availableCategories
+                      .filter((c) => field.value?.includes(c.id))
+                      .map((c) => c.name);
+
+                    return (
+                      <FormItem className="space-y-3 rounded-lg border p-4 shadow-sm bg-muted/20 md:col-span-2">
+                        <button
+                          type="button"
+                          onClick={() => setIsCategoryExpanded(!isCategoryExpanded)}
+                          className="flex items-center justify-between w-full text-left focus:outline-none group"
                         >
-                          <option value="Formula 1">Formula 1</option>
-                          <option value="Rally">Rally</option>
-                          <option value="Supercars">Supercars</option>
-                          <option value="Karting">Karting</option>
-                        </select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                          <div className="space-y-1">
+                            <FormLabel className="text-base font-semibold cursor-pointer group-hover:text-primary transition-colors">
+                              Categories <span className="text-destructive">*</span>
+                            </FormLabel>
+                            <FormDescription className="cursor-pointer">
+                              Assign this team to one or more racing categories.
+                            </FormDescription>
+                            
+                            {!isCategoryExpanded && (
+                              <div className="flex flex-wrap gap-1.5 pt-1.5">
+                                {selectedCategoryNames.length > 0 ? (
+                                  selectedCategoryNames.map((name) => (
+                                    <span
+                                      key={name}
+                                      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
+                                    >
+                                      {name}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="text-xs text-muted-foreground italic">
+                                    None selected (click to expand and select)
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-muted-foreground group-hover:text-primary transition-colors p-1.5 rounded-md hover:bg-muted/80">
+                            <ChevronDown
+                              className={`h-5 w-5 transition-transform duration-300 ease-in-out ${
+                                isCategoryExpanded ? "rotate-180" : ""
+                              }`}
+                            />
+                          </div>
+                        </button>
+
+                        {isCategoryExpanded && (
+                          <div className="pt-4 border-t border-border flex flex-col gap-4">
+                            {parentCategories.map((parent) => {
+                              const children = childCategoriesMap[parent.id] || [];
+                              const isParentChecked = field.value?.includes(parent.id);
+                              return (
+                                <div key={parent.id} className="space-y-2">
+                                  <div className="flex flex-row items-center space-x-3 space-y-0">
+                                    <input
+                                      type="checkbox"
+                                      id={`cat-${parent.id}`}
+                                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                                      checked={isParentChecked}
+                                      onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        const value = field.value || [];
+                                        if (checked) {
+                                          field.onChange([...value, parent.id]);
+                                        } else {
+                                          const childIds = children.map((c: any) => c.id);
+                                          field.onChange(value.filter((val: string) => val !== parent.id && !childIds.includes(val)));
+                                        }
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor={`cat-${parent.id}`}
+                                      className="text-sm font-bold leading-none cursor-pointer select-none text-foreground"
+                                    >
+                                      {parent.name}
+                                    </label>
+                                  </div>
+
+                                  {children.length > 0 && (
+                                    <div className="pl-6 border-l border-border/60 ml-2 space-y-2 flex flex-col pt-1">
+                                      {children.map((child: any) => {
+                                        const isChildChecked = field.value?.includes(child.id);
+                                        return (
+                                          <div
+                                            key={child.id}
+                                            className="flex flex-row items-center space-x-3 space-y-0"
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              id={`cat-${child.id}`}
+                                              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                                              checked={isChildChecked}
+                                              onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                const value = field.value || [];
+                                                if (checked) {
+                                                  field.onChange([...value, child.id]);
+                                                } else {
+                                                  field.onChange(value.filter((val: string) => val !== child.id));
+                                                }
+                                              }}
+                                            />
+                                            <label
+                                              htmlFor={`cat-${child.id}`}
+                                              className="text-sm font-medium leading-none cursor-pointer select-none text-muted-foreground hover:text-foreground"
+                                            >
+                                              {child.name}
+                                            </label>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
                 <FormField
                   control={form.control}
