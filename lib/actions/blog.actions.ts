@@ -23,10 +23,8 @@ export async function getBlogs(q?: string, page: number = 1, limit: number = 10)
 
     const offset = (page - 1) * limit;
     
-    const [allBlogs, [{ count }]] = await Promise.all([
-      query.orderBy(desc(blogs.createdAt)).limit(limit).offset(offset),
-      countQuery
-    ]);
+    const [{ count }] = await countQuery;
+    const allBlogs = await query.orderBy(desc(blogs.createdAt)).limit(limit).offset(offset);
 
     return { blogs: allBlogs, total: Number(count) };
   } catch (error) {

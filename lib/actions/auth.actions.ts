@@ -95,8 +95,8 @@ export async function getUsersList(page: number = 1, limit: number = 10) {
   try {
     const offset = (page - 1) * limit;
 
-    const [list, [{ count }]] = await Promise.all([
-      db
+    const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const list = await db
         .select({
           id: users.id,
           username: users.username,
@@ -106,9 +106,7 @@ export async function getUsersList(page: number = 1, limit: number = 10) {
         .from(users)
         .orderBy(desc(users.createdAt))
         .limit(limit)
-        .offset(offset),
-      db.select({ count: sql<number>`count(*)` }).from(users)
-    ]);
+        .offset(offset);
 
     return { users: list, total: Number(count) };
   } catch (error) {

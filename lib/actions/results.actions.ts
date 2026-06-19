@@ -69,10 +69,8 @@ export async function getAchievements(filters: { year?: number; category?: strin
 
     const offset = (page - 1) * limit;
 
-    const [results, [{ count }]] = await Promise.all([
-      query.orderBy(desc(achievements.year), achievements.raceName, achievements.position).limit(limit).offset(offset),
-      countQuery
-    ]);
+    const [{ count }] = await countQuery;
+    const results = await query.orderBy(desc(achievements.year), achievements.raceName, achievements.position).limit(limit).offset(offset);
 
     return { achievements: results, total: Number(count) };
   } catch (error) {
@@ -208,10 +206,8 @@ export async function getRiderStats(filters: { season?: number; category?: strin
 
     const offset = (page - 1) * limit;
 
-    const [results, [{ count }]] = await Promise.all([
-      query.orderBy(desc(riderStats.season), desc(riderStats.points)).limit(limit).offset(offset),
-      countQuery
-    ]);
+    const [{ count }] = await countQuery;
+    const results = await query.orderBy(desc(riderStats.season), desc(riderStats.points)).limit(limit).offset(offset);
 
     return { riderStats: results, total: Number(count) };
   } catch (error) {

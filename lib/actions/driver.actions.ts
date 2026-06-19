@@ -24,10 +24,8 @@ export async function getDrivers(q?: string, page: number = 1, limit: number = 1
     
     const offset = (page - 1) * limit;
 
-    const [allDrivers, [{ count }]] = await Promise.all([
-      query.orderBy(desc(drivers.createdAt)).limit(limit).offset(offset),
-      countQuery
-    ]);
+    const [{ count }] = await countQuery;
+    const allDrivers = await query.orderBy(desc(drivers.createdAt)).limit(limit).offset(offset);
     
     return { drivers: allDrivers, total: Number(count) };
   } catch (error) {

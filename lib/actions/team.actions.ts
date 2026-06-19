@@ -23,10 +23,8 @@ export async function getTeams(q?: string, page: number = 1, limit: number = 10)
 
     const offset = (page - 1) * limit;
 
-    const [allTeams, [{ count }]] = await Promise.all([
-      query.orderBy(desc(teams.createdAt)).limit(limit).offset(offset),
-      countQuery
-    ]);
+    const [{ count }] = await countQuery;
+    const allTeams = await query.orderBy(desc(teams.createdAt)).limit(limit).offset(offset);
 
     return { teams: allTeams, total: Number(count) };
   } catch (error) {
