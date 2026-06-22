@@ -64,7 +64,7 @@ const NAV_ITEMS = [
     icon: Shield,
   },
   {
-    label: "Drivers",
+    label: "Drivers & Riders",
     href: "/admin/drivers",
     icon: Users,
   },
@@ -79,7 +79,7 @@ const NAV_ITEMS = [
     icon: Trophy,
   },
   {
-    label: "SLADA",
+    label: "Racing in Sri Lanka",
     href: "/admin/slada",
     icon: FileText,
   },
