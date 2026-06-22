@@ -88,9 +88,19 @@ export default async function TeamsAdminPage({ searchParams }: PageProps) {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 uppercase tracking-wider">
-                          {team.category}
-                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {team.teamCategories && team.teamCategories.length > 0 ? (
+                            team.teamCategories.map((tc: any, i: number) => (
+                              <span key={i} className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 uppercase tracking-wider">
+                                {tc.category?.name}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-zinc-100 text-zinc-600 uppercase tracking-wider">
+                              {team.category || "Uncategorized"}
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>{team.seasonPosition || "N/A"}</TableCell>
                       <TableCell>{team.seasonPoints ?? 0}</TableCell>
