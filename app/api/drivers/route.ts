@@ -11,16 +11,13 @@ export async function GET(request: Request) {
     const season = parseInt(searchParams.get("season") || "2026");
     
     let category = searchParams.get("category");
-    if (!category) {
-      return NextResponse.json([]);
-    }
 
     const whereConditions = [eq(drivers.status, "approved")];
     if (type === "driver" || type === "rider") {
       whereConditions.push(eq(drivers.playerType, type));
     }
 
-    if (category) {
+    if (category && category !== "all") {
       const categoryFilter = or(
         eq(drivers.racingCategory, category),
         eq(riderStats.category, category)
@@ -28,6 +25,15 @@ export async function GET(request: Request) {
       if (categoryFilter) {
         whereConditions.push(categoryFilter);
       }
+    }
+
+    const joinConditions: any[] = [
+      eq(drivers.id, riderStats.driverId),
+      eq(riderStats.season, season)
+    ];
+
+    if (category && category !== "all") {
+      joinConditions.push(eq(riderStats.category, category));
     }
 
     const data = await db
@@ -61,18 +67,21 @@ export async function GET(request: Request) {
         position: riderStats.position,
       })
       .from(drivers)
-      .leftJoin(
-        riderStats,
-        and(
-          eq(drivers.id, riderStats.driverId),
-          eq(riderStats.season, season),
-          eq(riderStats.category, category)
-        )
-      )
+      .leftJoin(riderStats, and(...joinConditions))
       .where(and(...whereConditions))
       .orderBy(desc(riderStats.points));
 
-    return NextResponse.json(data);
+    // Deduplicate drivers in memory, keeping their highest point record
+    const uniqueData = [];
+    const seen = new Set();
+    for (const row of data) {
+      if (!seen.has(row.id)) {
+        seen.add(row.id);
+        uniqueData.push(row);
+      }
+    }
+
+    return NextResponse.json(uniqueData);
   } catch (error) {
     console.error("[API_DRIVERS_GET]", error);
     return NextResponse.json({ error: "Failed to fetch drivers" }, { status: 500 });
