@@ -11,15 +11,19 @@ const conn = globalForDb.conn ?? (
   connectionString 
     ? mysql.createPool({
         uri: connectionString,
+        connectionLimit: 1, // Only 1 connection per Vercel Lambda
+        maxIdle: 1, // Max 1 idle connection
+        idleTimeout: 60000, // Close idle connections after 60s to prevent stale TCP sockets
         enableKeepAlive: true,
         keepAliveInitialDelay: 10000,
-        connectionLimit: 3,
+        waitForConnections: true,
+        queueLimit: 0,
       }) 
     : mysql.createPool({ 
         host: "localhost",
+        connectionLimit: 3,
         enableKeepAlive: true,
         keepAliveInitialDelay: 10000,
-        connectionLimit: 3,
       })
 );
 
