@@ -14,9 +14,11 @@ import {
   Heading1, 
   Heading2, 
   List, 
-  ListOrdered 
+  ListOrdered,
+  Upload,
+  Loader2
 } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
 
 interface BlogEditorProps {
   value: string;
@@ -40,6 +42,9 @@ const extensions = [
 ];
 
 export function BlogEditor({ value, onChange }: BlogEditorProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
   const editor = useEditor({
     extensions,
     immediatelyRender: false,
@@ -77,6 +82,44 @@ export function BlogEditor({ value, onChange }: BlogEditorProps) {
       editor.chain().focus().setImage({ src: url }).run();
     }
   }, [editor]);
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !editor) return;
+
+    // Validate file is an image
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file.");
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.url) {
+        editor.chain().focus().setImage({ src: data.url }).run();
+      } else {
+        alert(data.error || "Failed to upload image.");
+      }
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      alert("An unexpected error occurred during upload.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
 
   if (!editor) {
     return null;
@@ -153,10 +196,28 @@ export function BlogEditor({ value, onChange }: BlogEditorProps) {
           type="button"
           variant="outline"
           size="icon"
+          title="Insert Image by URL"
           onClick={addImage}
         >
           <ImageIcon className="h-4 w-4" />
         </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          title="Upload Image"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading}
+        >
+          {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+        </Button>
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          accept="image/*"
+          onChange={handleImageUpload}
+        />
       </div>
       <div className="p-2">
         <EditorContent editor={editor} />
