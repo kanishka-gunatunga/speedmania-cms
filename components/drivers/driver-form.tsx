@@ -80,6 +80,7 @@ const formSchema = z.object({
   accessibleColor: z.string().optional(),
   number: z.string().optional(),
   image: z.string().url("Must be a valid URL").or(z.literal("")).optional(),
+  bannerImage: z.string().url("Must be a valid URL").or(z.literal("")).optional(),
   numberImage: z.string().url("Must be a valid URL").or(z.literal("")).optional(),
   flagCode: z.string().optional(),
   country: z.string().optional(),
@@ -126,6 +127,7 @@ interface DriverFormValues {
   accessibleColor?: string;
   number?: string;
   image?: string;
+  bannerImage?: string;
   numberImage?: string;
   flagCode?: string;
   country?: string;
@@ -219,6 +221,7 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
       accessibleColor: initialData?.accessibleColor || "",
       number: initialData?.number || "",
       image: initialData?.image || "",
+      bannerImage: initialData?.bannerImage || "",
       numberImage: initialData?.numberImage || "",
       flagCode: initialData?.flagCode || "",
       country: initialData?.country || "",
@@ -571,6 +574,23 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
                           value={field.value || ""}
                           onChange={field.onChange}
                           placeholder="https://media.formula1.com/..."
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="bannerImage"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Banner Image (Landscape)</FormLabel>
+                      <FormControl>
+                        <ImageUploadField
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          placeholder="https://media.formula1.com/banner.jpg"
                         />
                       </FormControl>
                       <FormMessage />

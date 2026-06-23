@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db, categories, blogCategories } from "@/lib/db";
+import { db, categories, blogCategories, teamCategories } from "@/lib/db";
 import { desc, eq, asc, sql } from "drizzle-orm";
 
 async function initializeCategoryTables() {
@@ -23,6 +23,11 @@ async function initializeCategoryTables() {
       \`blog_id\` varchar(191) NOT NULL,
       \`category_id\` varchar(191) NOT NULL,
       CONSTRAINT \`blog_categories_pk\` PRIMARY KEY(\`blog_id\`, \`category_id\`)
+    );`,
+    `CREATE TABLE IF NOT EXISTS \`team_categories\` (
+      \`team_id\` varchar(191) NOT NULL,
+      \`category_id\` varchar(191) NOT NULL,
+      CONSTRAINT \`team_categories_pk\` PRIMARY KEY(\`team_id\`, \`category_id\`)
     );`
   ];
   for (const q of queries) {
@@ -52,66 +57,6 @@ async function initializeCategoryTables() {
 
 export async function getCategories(type?: string) {
   try {
-    // Dynamic Self-Healing: Check and alter categories table to add parent_id if it doesn't exist
-    try {
-      await db.execute(sql`ALTER TABLE \`categories\` ADD COLUMN \`parent_id\` varchar(191) DEFAULT NULL`);
-    } catch (err: any) {
-      const isDuplicateColumnError = 
-        err?.code === "ER_DUP_FIELDNAME" ||
-        err?.cause?.code === "ER_DUP_FIELDNAME" ||
-        err?.errno === 1060 ||
-        err?.cause?.errno === 1060 ||
-        err?.sqlState === "42S21" ||
-        err?.cause?.sqlState === "42S21" ||
-        err?.message?.includes("Duplicate column") ||
-        err?.cause?.message?.includes("Duplicate column") ||
-        err?.message?.includes("already exists") ||
-        err?.cause?.message?.includes("already exists");
-
-      if (!isDuplicateColumnError) {
-        console.error("Migration error adding parent_id column:", err);
-      }
-    }
-
-    // Dynamic Self-Healing: Check and alter categories table to add type if it doesn't exist
-    try {
-      await db.execute(sql`ALTER TABLE \`categories\` ADD COLUMN \`type\` varchar(50) NOT NULL DEFAULT 'blog'`);
-    } catch (err: any) {
-      const isDuplicateColumnError = 
-        err?.code === "ER_DUP_FIELDNAME" ||
-        err?.cause?.code === "ER_DUP_FIELDNAME" ||
-        err?.errno === 1060 ||
-        err?.cause?.errno === 1060 ||
-        err?.sqlState === "42S21" ||
-        err?.cause?.sqlState === "42S21" ||
-        err?.message?.includes("Duplicate column") ||
-        err?.cause?.message?.includes("Duplicate column") ||
-        err?.message?.includes("already exists") ||
-        err?.cause?.message?.includes("already exists");
-
-      if (!isDuplicateColumnError) {
-        console.error("Migration error adding type column:", err);
-      }
-    }
-
-    // Dynamic Self-Healing: Migrate unique indexes to composite constraints (name+type, slug+type)
-    try {
-      try {
-        await db.execute(sql`ALTER TABLE \`categories\` DROP INDEX \`categories_name_unique\``);
-      } catch (err) {}
-      try {
-        await db.execute(sql`ALTER TABLE \`categories\` DROP INDEX \`categories_slug_unique\``);
-      } catch (err) {}
-      try {
-        await db.execute(sql`ALTER TABLE \`categories\` ADD UNIQUE KEY \`categories_name_type_unique\` (\`name\`, \`type\`)`);
-      } catch (err) {}
-      try {
-        await db.execute(sql`ALTER TABLE \`categories\` ADD UNIQUE KEY \`categories_slug_type_unique\` (\`slug\`, \`type\`)`);
-      } catch (err) {}
-    } catch (migErr) {
-      console.warn("Self-healing unique indexes warning:", migErr);
-    }
-
     let allCategories;
     if (type) {
       allCategories = await db.select().from(categories).where(eq(categories.type, type)).orderBy(asc(categories.name));
@@ -155,24 +100,6 @@ export async function getCategories(type?: string) {
 
 export async function createCategory(data: { name: string; slug: string; parentId?: string | null; type?: string }) {
   try {
-    // Dynamic Self-Healing: Ensure composite unique constraints exist before insert
-    try {
-      try {
-        await db.execute(sql`ALTER TABLE \`categories\` DROP INDEX \`categories_name_unique\``);
-      } catch (err) {}
-      try {
-        await db.execute(sql`ALTER TABLE \`categories\` DROP INDEX \`categories_slug_unique\``);
-      } catch (err) {}
-      try {
-        await db.execute(sql`ALTER TABLE \`categories\` ADD UNIQUE KEY \`categories_name_type_unique\` (\`name\`, \`type\`)`);
-      } catch (err) {}
-      try {
-        await db.execute(sql`ALTER TABLE \`categories\` ADD UNIQUE KEY \`categories_slug_type_unique\` (\`slug\`, \`type\`)`);
-      } catch (err) {}
-    } catch (migErr) {
-      console.warn("Self-healing unique indexes warning in createCategory:", migErr);
-    }
-
     const id = crypto.randomUUID();
     await db.insert(categories).values({
       id,
@@ -220,6 +147,7 @@ export async function deleteCategory(id: string) {
   try {
     // Clean up junction table mappings
     await db.delete(blogCategories).where(eq(blogCategories.categoryId, id));
+    await db.delete(teamCategories).where(eq(teamCategories.categoryId, id));
     // Delete the category itself
     await db.delete(categories).where(eq(categories.id, id));
 

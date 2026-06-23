@@ -84,6 +84,7 @@ export const drivers = mysqlTable("drivers", {
   accessibleColor: varchar("accessible_color", { length: 20 }),
   number: varchar("number", { length: 10 }),
   image: text("image"),
+  bannerImage: text("banner_image"),
   numberImage: text("number_image"),
   flagCode: varchar("flag_code", { length: 10 }),
   country: varchar("country", { length: 100 }),
