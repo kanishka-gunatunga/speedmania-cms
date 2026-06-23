@@ -23,6 +23,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { createTeam, updateTeam } from "@/lib/actions/team.actions";
 import { ImageUploadField } from "@/components/ui/image-upload-field";
+import { SeoSettings, seoMetaSchema } from "@/components/admin/seo-settings";
 
 const rosterSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -70,6 +71,13 @@ const formSchema = z.object({
 
   // Custom Roster
   roster: z.array(rosterSchema).default([]),
+
+  seoMeta: z.object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    keywords: z.string().optional(),
+    ogImage: z.string().optional(),
+  }).optional(),
 });
 
 type TeamFormValues = z.infer<typeof formSchema>;
@@ -141,6 +149,8 @@ export function TeamForm({ initialData, availableDrivers, availableCategories = 
 
       // Custom Roster
       roster: initialRoster,
+      
+      seoMeta: initialData?.seoMeta || { title: "", description: "", keywords: "", ogImage: "" },
     },
   });
 
@@ -881,6 +891,10 @@ export function TeamForm({ initialData, availableDrivers, availableCategories = 
             </div>
           </TabsContent>
         </Tabs>
+
+        <div className="mt-8">
+          <SeoSettings form={form} />
+        </div>
 
         <div className="flex justify-end gap-4 pt-8 border-t">
           <Button

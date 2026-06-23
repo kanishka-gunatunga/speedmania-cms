@@ -25,6 +25,7 @@ import { createCircuit, updateCircuit } from "@/lib/actions/circuit.actions";
 import { Textarea } from "@/components/ui/textarea";
 import { UseFormReturn } from "react-hook-form";
 import { ImageUploadField } from "@/components/ui/image-upload-field";
+import { SeoSettings, seoMetaSchema } from "@/components/admin/seo-settings";
 
 const faqSchema = z.object({
   question: z.string().min(1, "Question is required"),
@@ -47,6 +48,12 @@ const formSchema = z.object({
   raceDistance: z.string().optional(),
   racingCategory: z.string().optional(),
   faqs: z.array(faqSchema).default([]),
+  seoMeta: z.object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    keywords: z.string().optional(),
+    ogImage: z.string().optional(),
+  }).optional(),
 });
 
 type CircuitFormValues = z.infer<typeof formSchema>;
@@ -123,6 +130,7 @@ export function CircuitForm({ initialData }: CircuitFormProps) {
         question: faq.question ?? "",
         answer: faq.answer ?? "",
       })),
+      seoMeta: initialData?.seoMeta || { title: "", description: "", keywords: "", ogImage: "" },
     },
   });
 
@@ -579,6 +587,10 @@ export function CircuitForm({ initialData }: CircuitFormProps) {
             </div>
           </TabsContent>
         </Tabs>
+
+        <div className="mt-8">
+          <SeoSettings form={form} />
+        </div>
 
         <div className="flex justify-end gap-4 pt-8 border-t">
           <Button

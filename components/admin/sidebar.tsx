@@ -14,7 +14,8 @@ import {
   Tag,
   Trophy,
   User,
-  Shield
+  Shield,
+  Search
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -87,6 +88,11 @@ const NAV_ITEMS = [
     label: "Users",
     href: "/admin/users",
     icon: User,
+  },
+  {
+    label: "SEO Settings",
+    href: "/admin/seo",
+    icon: Search,
   },
 ];
 
