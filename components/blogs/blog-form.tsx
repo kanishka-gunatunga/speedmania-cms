@@ -22,8 +22,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { BlogEditor } from "./blog-editor";
 import { createBlog, updateBlog } from "@/lib/actions/blog.actions";
-import { ImageUploadField } from "@/components/ui/image-upload-field";
 import { ChevronDown } from "lucide-react";
+import { SeoSettings } from "@/components/admin/seo-settings";
+import { ImageUploadField } from "@/components/ui/image-upload-field";
 
 // Form Schema
 const formSchema = z.object({
@@ -43,6 +44,12 @@ const formSchema = z.object({
   author: z.string().optional(),
   published: z.boolean().default(false),
   categoryIds: z.array(z.string()).default([]),
+  seoMeta: z.object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    keywords: z.string().optional(),
+    ogImage: z.string().optional(),
+  }).optional(),
 });
 
 type BlogFormValues = z.infer<typeof formSchema>;
@@ -57,6 +64,7 @@ interface BlogFormProps {
     featuredImage?: string | null;
     author?: string | null;
     published?: boolean;
+    seoMeta?: any;
     categories?: { id: string; name: string; slug: string; parentId?: string | null }[];
   };
   categories: { id: string; name: string; slug: string; parentId?: string | null }[];
@@ -79,6 +87,7 @@ export function BlogForm({ initialData, categories = [] }: BlogFormProps) {
       author: initialData?.author || "",
       published: !!initialData?.published,
       categoryIds: initialData?.categories?.map(c => c.id) || [],
+      seoMeta: initialData?.seoMeta || { title: "", description: "", keywords: "", ogImage: "" },
     },
   });
 
@@ -416,6 +425,8 @@ export function BlogForm({ initialData, categories = [] }: BlogFormProps) {
               </FormItem>
             )}
           />
+
+          <SeoSettings form={form} />
 
           <div className="flex justify-end gap-4">
             <Button

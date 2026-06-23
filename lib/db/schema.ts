@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, boolean, timestamp, longtext, int, primaryKey, unique } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, text, boolean, timestamp, longtext, int, primaryKey, unique, json } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 
 // BLOGS TABLE
@@ -11,6 +11,7 @@ export const blogs = mysqlTable("blogs", {
   featuredImage: text("featured_image"),
   author: varchar("author", { length: 191 }),
   published: boolean("published").notNull().default(false),
+  seoMeta: json("seo_meta"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
 });
@@ -102,6 +103,7 @@ export const drivers = mysqlTable("drivers", {
   userId: varchar("user_id", { length: 191 }),
   pendingChanges: longtext("pending_changes"),
   teamId: varchar("team_id", { length: 191 }),
+  seoMeta: json("seo_meta"),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
@@ -163,6 +165,7 @@ export const circuits = mysqlTable("circuits", {
   fastestLapYear: int("fastest_lap_year"),
   raceDistance: varchar("race_distance", { length: 50 }),
   racingCategory: varchar("racing_category", { length: 100 }),
+  seoMeta: json("seo_meta"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
 });
@@ -303,6 +306,8 @@ export const teams = mysqlTable("teams", {
   // Custom Roster (JSON stringified)
   roster: longtext("roster"),
   
+  seoMeta: json("seo_meta"),
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
 });
@@ -397,3 +402,16 @@ export type SladaPage = typeof sladaPage.$inferSelect;
 export type SladaCommittee = typeof sladaCommittee.$inferSelect;
 export type CircuitCategory = typeof circuitCategories.$inferSelect;
 
+// PAGE SEO TABLE
+export const pageSeo = mysqlTable("page_seo", {
+  id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  pageName: varchar("page_name", { length: 50 }).notNull().unique(), // e.g., 'home', 'drivers', 'riders', 'results', 'tracks', 'teams'
+  title: text("title"),
+  description: text("description"),
+  keywords: text("keywords"),
+  ogImage: text("og_image"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
+});
+
+export type PageSeo = typeof pageSeo.$inferSelect;

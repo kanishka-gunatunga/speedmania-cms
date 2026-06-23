@@ -24,6 +24,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { createDriver, updateDriver } from "@/lib/actions/driver.actions";
 import { BlogEditor } from "@/components/blogs/blog-editor";
 import { ImageUploadField } from "@/components/ui/image-upload-field";
+import { SeoSettings } from "@/components/admin/seo-settings";
 
 const achievementSchema = z.object({
   raceName: z.string().min(1, "Race name is required"),
@@ -95,6 +96,12 @@ const formSchema = z.object({
   careerPoles: z.coerce.number().min(0, "Career poles cannot be negative").optional(),
   biography: z.string().optional(),
   biographyImage: z.string().url("Must be a valid URL").or(z.literal("")).optional(),
+  seoMeta: z.object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    keywords: z.string().optional(),
+    ogImage: z.string().optional(),
+  }).optional(),
 });
 
 interface DriverFormValues {
@@ -160,6 +167,7 @@ interface DriverFormValues {
     sprintPodiums?: number;
     sprintPoles?: number;
   }[];
+  seoMeta?: any;
 }
 
 interface DriverFormProps {
@@ -226,6 +234,7 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
       careerPoles: initialData?.careerPoles || 0,
       biography: initialData?.biography || "",
       biographyImage: initialData?.biographyImage || "",
+      seoMeta: initialData?.seoMeta || { title: "", description: "", keywords: "", ogImage: "" },
     },
   });
 
@@ -1108,6 +1117,10 @@ export function DriverForm({ initialData, isPublic = false }: DriverFormProps) {
             </div>
           </TabsContent>
         </Tabs>
+
+        <div className="mt-8">
+          <SeoSettings form={form} />
+        </div>
 
         <div className="flex justify-end gap-4 pt-8 border-t">
           {!isPublic && (

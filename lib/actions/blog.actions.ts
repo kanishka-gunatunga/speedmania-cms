@@ -86,10 +86,11 @@ export async function createBlog(data: {
   author?: string | null;
   published: boolean;
   categoryIds?: string[];
+  seoMeta?: any;
 }) {
   try {
     const id = crypto.randomUUID();
-    const { categoryIds, ...blogData } = data;
+    const { categoryIds, seoMeta, ...blogData } = data;
 
     const slug = await generateUniqueSlug(blogData.slug || blogData.title || "post");
     blogData.slug = slug;
@@ -100,6 +101,7 @@ export async function createBlog(data: {
       featuredImage: blogData.featuredImage || null,
       excerpt: blogData.excerpt || null,
       author: blogData.author || null,
+      seoMeta: seoMeta || null,
     });
     
     if (categoryIds && categoryIds.length > 0) {
@@ -137,9 +139,10 @@ export async function updateBlog(id: string, data: {
   author?: string | null;
   published: boolean;
   categoryIds?: string[];
+  seoMeta?: any;
 }) {
   try {
-    const { categoryIds, ...blogData } = data;
+    const { categoryIds, seoMeta, ...blogData } = data;
 
     const slug = await generateUniqueSlug(blogData.slug || blogData.title || "post", id);
     blogData.slug = slug;
@@ -148,6 +151,7 @@ export async function updateBlog(id: string, data: {
       featuredImage: blogData.featuredImage || null,
       excerpt: blogData.excerpt || null,
       author: blogData.author || null,
+      seoMeta: seoMeta || null,
       updatedAt: new Date(),
     }).where(eq(blogs.id, id));
 

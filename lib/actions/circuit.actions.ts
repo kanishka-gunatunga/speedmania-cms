@@ -161,6 +161,7 @@ export async function createCircuit(data: {
   racingCategory?: string;
   categoryIds?: string[];
   faqs?: { question: string; answer: string }[];
+  seoMeta?: any;
 }) {
   try {
     const id = crypto.randomUUID();
@@ -240,6 +241,7 @@ export async function updateCircuit(id: string, data: {
   racingCategory?: string;
   categoryIds?: string[];
   faqs?: { question: string; answer: string }[];
+  seoMeta?: any;
 }) {
   try {
     const { faqs: faqsData, categoryIds, ...circuitInfo } = data;
