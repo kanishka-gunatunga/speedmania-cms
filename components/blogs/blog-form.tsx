@@ -50,6 +50,7 @@ const formSchema = z.object({
     keywords: z.string().optional(),
     ogImage: z.string().optional(),
   }).optional(),
+  createdAt: z.string().optional(),
 });
 
 type BlogFormValues = z.infer<typeof formSchema>;
@@ -66,6 +67,7 @@ interface BlogFormProps {
     published?: boolean;
     seoMeta?: any;
     categories?: { id: string; name: string; slug: string; parentId?: string | null }[];
+    createdAt?: Date | string | null;
   };
   categories: { id: string; name: string; slug: string; parentId?: string | null }[];
 }
@@ -88,6 +90,11 @@ export function BlogForm({ initialData, categories = [] }: BlogFormProps) {
       published: !!initialData?.published,
       categoryIds: initialData?.categories?.map(c => c.id) || [],
       seoMeta: initialData?.seoMeta || { title: "", description: "", keywords: "", ogImage: "" },
+      createdAt: initialData?.createdAt ? (() => {
+        const d = new Date(initialData.createdAt);
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        return d.toISOString().slice(0, 16);
+      })() : "",
     },
   });
 
@@ -95,11 +102,22 @@ export function BlogForm({ initialData, categories = [] }: BlogFormProps) {
     setError(null);
     startTransition(async () => {
       try {
+        let finalCreatedAt = data.createdAt ? new Date(data.createdAt) : undefined;
+        // Auto-set to current date if published and no manual date provided, and wasn't published before
+        if (data.published && !data.createdAt && !initialData?.published) {
+          finalCreatedAt = new Date();
+        }
+
+        const payload = {
+          ...data,
+          createdAt: finalCreatedAt,
+        };
+
         let result;
         if (initialData?.id) {
-          result = await updateBlog(initialData.id, data);
+          result = await updateBlog(initialData.id, payload);
         } else {
-          result = await createBlog(data);
+          result = await createBlog(payload);
         }
 
         if (result?.success) {
@@ -408,6 +426,23 @@ export function BlogForm({ initialData, categories = [] }: BlogFormProps) {
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="createdAt"
+            render={({ field }) => (
+              <FormItem className="rounded-lg border p-4 shadow-sm bg-muted/20">
+                <FormLabel className="text-base font-semibold">Published Date (Optional)</FormLabel>
+                <FormDescription className="mb-3">
+                  Set a manual back-date for when this post was published. Leave empty to automatically use the current date when published.
+                </FormDescription>
+                <FormControl>
+                  <Input type="datetime-local" {...field} className="w-fit" />
+                </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />

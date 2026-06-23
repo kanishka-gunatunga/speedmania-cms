@@ -87,6 +87,7 @@ export async function createBlog(data: {
   published: boolean;
   categoryIds?: string[];
   seoMeta?: any;
+  createdAt?: Date;
 }) {
   try {
     const id = crypto.randomUUID();
@@ -102,6 +103,7 @@ export async function createBlog(data: {
       excerpt: blogData.excerpt || null,
       author: blogData.author || null,
       seoMeta: seoMeta || null,
+      createdAt: blogData.createdAt || new Date(),
     });
     
     if (categoryIds && categoryIds.length > 0) {
@@ -140,6 +142,7 @@ export async function updateBlog(id: string, data: {
   published: boolean;
   categoryIds?: string[];
   seoMeta?: any;
+  createdAt?: Date;
 }) {
   try {
     const { categoryIds, seoMeta, ...blogData } = data;
@@ -153,6 +156,7 @@ export async function updateBlog(id: string, data: {
       author: blogData.author || null,
       seoMeta: seoMeta || null,
       updatedAt: new Date(),
+      ...(blogData.createdAt ? { createdAt: blogData.createdAt } : {}),
     }).where(eq(blogs.id, id));
 
     // Update categories junction table
