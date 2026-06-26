@@ -1,10 +1,10 @@
 import { getCurrentUser } from "@/lib/actions/auth.actions";
 import { redirect } from "next/navigation";
-import LoginForm from "@/components/auth/login-form";
+import AuthorRegisterForm from "@/components/auth/author-register-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
+export default async function AuthorRegisterPage() {
   const user = await getCurrentUser();
   if (user) {
     if (user.role === "author") {
@@ -14,5 +14,5 @@ export default async function LoginPage() {
     }
   }
 
-  return <LoginForm />;
+  return <AuthorRegisterForm />;
 }

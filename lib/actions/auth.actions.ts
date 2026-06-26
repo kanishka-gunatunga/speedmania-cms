@@ -24,7 +24,7 @@ export async function loginAdmin(prevState: any, formData: FormData) {
       where: eq(users.username, username),
     });
 
-    if (!user) {
+    if (!user || user.role !== "admin") {
       return { success: false, error: "Invalid username or password" };
     }
 

@@ -70,9 +70,11 @@ interface BlogFormProps {
     createdAt?: Date | string | null;
   };
   categories: { id: string; name: string; slug: string; parentId?: string | null }[];
+  returnUrl?: string;
+  authorId?: string;
 }
 
-export function BlogForm({ initialData, categories = [] }: BlogFormProps) {
+export function BlogForm({ initialData, categories = [], returnUrl = "/admin/blogs", authorId }: BlogFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -111,6 +113,7 @@ export function BlogForm({ initialData, categories = [] }: BlogFormProps) {
         const payload = {
           ...data,
           createdAt: finalCreatedAt,
+          ...(authorId ? { authorId } : {}),
         };
 
         let result;
@@ -121,7 +124,7 @@ export function BlogForm({ initialData, categories = [] }: BlogFormProps) {
         }
 
         if (result?.success) {
-          router.push("/admin/blogs");
+          router.push(returnUrl);
           router.refresh();
         } else {
           setError(result?.error || "An error occurred");
@@ -467,7 +470,7 @@ export function BlogForm({ initialData, categories = [] }: BlogFormProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push("/admin/blogs")}
+              onClick={() => router.push(returnUrl)}
               disabled={isPending}
             >
               Cancel

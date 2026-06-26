@@ -84,6 +84,7 @@ export async function createBlog(data: {
   excerpt?: string | null;
   featuredImage?: string | null;
   author?: string | null;
+  authorId?: string | null;
   published: boolean;
   categoryIds?: string[];
   seoMeta?: any;
@@ -102,6 +103,7 @@ export async function createBlog(data: {
       featuredImage: blogData.featuredImage || null,
       excerpt: blogData.excerpt || null,
       author: blogData.author || null,
+      authorId: blogData.authorId || null,
       seoMeta: seoMeta || null,
       createdAt: blogData.createdAt || new Date(),
     });
@@ -139,6 +141,7 @@ export async function updateBlog(id: string, data: {
   excerpt?: string | null;
   featuredImage?: string | null;
   author?: string | null;
+  authorId?: string | null;
   published: boolean;
   categoryIds?: string[];
   seoMeta?: any;
@@ -154,6 +157,7 @@ export async function updateBlog(id: string, data: {
       featuredImage: blogData.featuredImage || null,
       excerpt: blogData.excerpt || null,
       author: blogData.author || null,
+      authorId: blogData.authorId || null,
       seoMeta: seoMeta || null,
       updatedAt: new Date(),
       ...(blogData.createdAt ? { createdAt: blogData.createdAt } : {}),

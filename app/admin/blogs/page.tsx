@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { SearchBar } from "@/components/admin/search-bar";
 import { Pagination } from "@/components/admin/pagination";
+import { DeleteBlogButton } from "@/components/admin/delete-blog-button";
 import {
   Table,
   TableBody,
@@ -95,15 +96,7 @@ export default async function BlogsPage({ searchParams }: PageProps) {
                               <Edit className="h-4 w-4" />
                             </Button>
                           </Link>
-                          {/* NOTE: Inline delete action for simplicity; for production, consider a dialog confirmation */}
-                          <form action={async () => {
-                            "use server";
-                            await deleteBlog(blog.id);
-                          }}>
-                            <Button type="submit" variant="outline" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </form>
+                          <DeleteBlogButton blogId={blog.id} />
                         </div>
                       </TableCell>
                     </TableRow>

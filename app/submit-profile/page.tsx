@@ -14,6 +14,9 @@ export default async function SubmitProfilePage() {
   if (!user) {
     redirect("/");
   }
+  if (user.role === "author") {
+    redirect("/author/dashboard");
+  }
 
   // Fetch driver profile for the logged in user
   const driver = await db.query.drivers.findFirst({
