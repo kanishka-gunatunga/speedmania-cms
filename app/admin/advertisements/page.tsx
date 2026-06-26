@@ -21,7 +21,7 @@ export default async function AdvertisementsPage() {
   const ads = result.success && result.data ? result.data : [];
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto p-8 max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Advertisements</h1>
         <Link href="/admin/advertisements/new">
