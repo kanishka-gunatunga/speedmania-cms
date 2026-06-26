@@ -91,11 +91,16 @@ export function AdvertisementForm({ initialData }: { initialData?: Advertisement
               control={form.control}
               name="imageUrl"
               render={({ field }) => (
-                <ImageUploadField
-                  label="Advertisement Image (SVG, PNG, JPG)"
-                  value={field.value}
-                  onChange={field.onChange}
-                />
+                <FormItem>
+                  <FormLabel>Advertisement Image (SVG, PNG, JPG)</FormLabel>
+                  <FormControl>
+                    <ImageUploadField
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
             />
 
