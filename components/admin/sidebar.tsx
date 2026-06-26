@@ -15,7 +15,8 @@ import {
   Trophy,
   User,
   Shield,
-  Search
+  Search,
+  CalendarDays
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -73,6 +74,11 @@ const NAV_ITEMS = [
     label: "Circuits",
     href: "/admin/circuits",
     icon: Globe,
+  },
+  {
+    label: "Calendar",
+    href: "/admin/calendar",
+    icon: CalendarDays,
   },
   {
     label: "Results & Standings",
