@@ -447,6 +447,19 @@ export const pageSeo = mysqlTable("page_seo", {
 
 export type PageSeo = typeof pageSeo.$inferSelect;
 
+// ADVERTISEMENTS TABLE
+export const advertisements = mysqlTable("advertisements", {
+  id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  title: varchar("title", { length: 255 }).notNull(),
+  imageUrl: text("image_url").notNull(),
+  linkUrl: text("link_url"),
+  isActive: boolean("is_active").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
+});
+
+export type Advertisement = typeof advertisements.$inferSelect;
+
 // CALENDAR EVENTS TABLE
 export const calendarEvents = mysqlTable("calendar_events", {
   id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),

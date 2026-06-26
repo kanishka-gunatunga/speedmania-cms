@@ -16,7 +16,8 @@ import {
   User,
   Shield,
   Search,
-  CalendarDays
+  CalendarDays,
+  MonitorPlay
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -79,6 +80,11 @@ const NAV_ITEMS = [
     label: "Calendar",
     href: "/admin/calendar",
     icon: CalendarDays,
+  },
+  {
+    label: "Advertisements",
+    href: "/admin/advertisements",
+    icon: MonitorPlay,
   },
   {
     label: "Results & Standings",
