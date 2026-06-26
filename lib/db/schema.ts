@@ -10,6 +10,7 @@ export const blogs = mysqlTable("blogs", {
   excerpt: text("excerpt"),
   featuredImage: text("featured_image"),
   author: varchar("author", { length: 191 }),
+  authorId: varchar("author_id", { length: 191 }),
   published: boolean("published").notNull().default(false),
   seoMeta: json("seo_meta"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -180,9 +181,13 @@ export const circuitFaqs = mysqlTable("circuit_faqs", {
 });
 
 // RELATIONS
-export const blogsRelations = relations(blogs, ({ many }) => ({
+export const blogsRelations = relations(blogs, ({ many, one }) => ({
   blogCategories: many(blogCategories),
   comments: many(comments),
+  authorProfile: one(authorProfiles, {
+    fields: [blogs.authorId],
+    references: [authorProfiles.id],
+  }),
 }));
 
 export const categoriesRelations = relations(categories, ({ many, one }) => ({
@@ -360,6 +365,10 @@ export const usersRelations = relations(users, ({ many, one }) => ({
     fields: [users.id],
     references: [drivers.userId],
   }),
+  authorProfile: one(authorProfiles, {
+    fields: [users.id],
+    references: [authorProfiles.userId],
+  }),
 }));
 
 // SLADA PAGE CONTENT TABLE
@@ -388,6 +397,27 @@ export const sladaCommittee = mysqlTable("slada_committee", {
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
 });
 
+// AUTHOR PROFILES TABLE
+export const authorProfiles = mysqlTable("author_profiles", {
+  id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: varchar("user_id", { length: 191 }),
+  fullName: text("full_name").notNull(),
+  bio: longtext("bio"),
+  avatarUrl: text("avatar_url"),
+  slug: varchar("slug", { length: 191 }).notNull().unique(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
+});
+
+export const authorProfilesRelations = relations(authorProfiles, ({ one, many }) => ({
+  user: one(users, {
+    fields: [authorProfiles.userId],
+    references: [users.id],
+  }),
+  blogs: many(blogs),
+}));
+
+export type AuthorProfile = typeof authorProfiles.$inferSelect;
 export type Blog = typeof blogs.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type BlogCategory = typeof blogCategories.$inferSelect;

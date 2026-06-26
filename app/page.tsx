@@ -69,7 +69,7 @@ export default async function CMSHomePage() {
         </div>
 
         {/* Portals Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-16">
           
           {/* Admin Dashboard Entry */}
           <div className="group relative bg-zinc-950/60 border border-zinc-900 hover:border-zinc-800 rounded-xl p-8 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.02)] overflow-hidden">
@@ -117,6 +117,31 @@ export default async function CMSHomePage() {
               <button className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-widest rounded-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(37,99,235,0.15)] hover:shadow-[0_0_25px_rgba(37,99,235,0.3)]">
                 <span>{user ? "Enter Driver Portal" : "Login to Driver Portal"}</span>
                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </Link>
+          </div>
+
+          {/* Author Portal Entry */}
+          <div className="group relative bg-zinc-950/60 border border-zinc-900 hover:border-zinc-800 rounded-xl p-8 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.02)] overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-zinc-800/10 rounded-bl-full pointer-events-none" />
+            
+            <div>
+              <div className="w-12 h-12 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-6 group-hover:bg-blue-950/20 group-hover:border-blue-900/40 transition-colors">
+                <Newspaper className="w-6 h-6 text-zinc-400 group-hover:text-blue-500 transition-colors" />
+              </div>
+              <h2 className="text-xl font-bold text-white uppercase tracking-wider mb-2 flex items-center gap-2">
+                Author Portal
+                <span className="text-xs font-extrabold bg-zinc-900 text-zinc-500 px-2 py-0.5 rounded border border-zinc-800 uppercase tracking-widest">Media</span>
+              </h2>
+              <p className="text-sm text-zinc-400 leading-relaxed mb-8">
+                For journalists and contributors to publish news articles, race reports, and media features.
+              </p>
+            </div>
+
+            <Link href={user ? "/author/dashboard" : "/login"}>
+              <button className="w-full py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-white font-extrabold text-xs uppercase tracking-widest rounded-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer">
+                <span>Enter Media Portal</span>
+                <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
           </div>
