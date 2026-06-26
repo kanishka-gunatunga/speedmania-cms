@@ -446,3 +446,20 @@ export const pageSeo = mysqlTable("page_seo", {
 });
 
 export type PageSeo = typeof pageSeo.$inferSelect;
+
+// CALENDAR EVENTS TABLE
+export const calendarEvents = mysqlTable("calendar_events", {
+  id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  round: varchar("round", { length: 50 }).notNull(),
+  dateRange: varchar("date_range", { length: 100 }).notNull(),
+  status: varchar("status", { length: 50 }).notNull(), // "FINISHED", "UP NEXT", "TBA"
+  title: varchar("title", { length: 255 }).notNull(),
+  subtitle: varchar("subtitle", { length: 255 }).notNull(),
+  series: varchar("series", { length: 50 }).notNull(), // "MotoGP", "F1", etc
+  logoUrl: text("logo_url"),
+  tabType: varchar("tab_type", { length: 20 }).notNull().default("INTL"), // "LK", "INTL"
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
+});
+
+export type CalendarEvent = typeof calendarEvents.$inferSelect;
