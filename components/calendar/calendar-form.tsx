@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
-import { useTransition, useState } from "react";
+import { useTransition, useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +31,8 @@ const formSchema = z.object({
   series: z.string().min(1, { message: "Series is required" }),
   logoUrl: z.string().optional().or(z.literal("")),
   tabType: z.string().min(1, { message: "Tab type is required" }),
+  startDate: z.string().min(1, { message: "Start date is required" }),
+  endDate: z.string().min(1, { message: "End date is required" }),
 });
 
 type CalendarFormValues = z.infer<typeof formSchema>;
@@ -46,6 +48,8 @@ interface CalendarFormProps {
     series: string;
     logoUrl?: string | null;
     tabType: string;
+    startDate?: Date | string | null;
+    endDate?: Date | string | null;
   } | null;
 }
 
@@ -59,6 +63,8 @@ export function CalendarForm({ initialData }: CalendarFormProps) {
     defaultValues: initialData ? {
       ...initialData,
       logoUrl: initialData.logoUrl || "",
+      startDate: initialData.startDate ? new Date(initialData.startDate).toISOString().slice(0, 10) : "",
+      endDate: initialData.endDate ? new Date(initialData.endDate).toISOString().slice(0, 10) : "",
     } : {
       round: "",
       dateRange: "",
@@ -68,17 +74,50 @@ export function CalendarForm({ initialData }: CalendarFormProps) {
       series: "",
       logoUrl: "",
       tabType: "INTL",
+      startDate: "",
+      endDate: "",
     },
   });
+
+  const watchedStartDate = form.watch("startDate");
+  const watchedEndDate = form.watch("endDate");
+
+  useEffect(() => {
+    if (watchedStartDate && watchedEndDate) {
+      const start = new Date(watchedStartDate);
+      const end = new Date(watchedEndDate);
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+        const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+        const startDay = String(start.getDate()).padStart(2, "0");
+        const startMonth = months[start.getMonth()];
+        const endDay = String(end.getDate()).padStart(2, "0");
+        const endMonth = months[end.getMonth()];
+        
+        let dateRangeStr = "";
+        if (startMonth === endMonth && startDay === endDay) {
+          dateRangeStr = `${startDay} ${startMonth}`;
+        } else {
+          dateRangeStr = `${startDay} ${startMonth} - ${endDay} ${endMonth}`;
+        }
+        form.setValue("dateRange", dateRangeStr);
+      }
+    }
+  }, [watchedStartDate, watchedEndDate, form]);
 
   async function onSubmit(data: CalendarFormValues) {
     setError(null);
     startTransition(async () => {
       let result;
+      const payload = {
+        ...data,
+        startDate: data.startDate ? new Date(data.startDate) : null,
+        endDate: data.endDate ? new Date(data.endDate) : null,
+      };
+
       if (initialData?.id) {
-        result = await updateCalendarEvent(initialData.id, data);
+        result = await updateCalendarEvent(initialData.id, payload);
       } else {
-        result = await createCalendarEvent(data);
+        result = await createCalendarEvent(payload);
       }
 
       if (result.success) {
@@ -116,6 +155,34 @@ export function CalendarForm({ initialData }: CalendarFormProps) {
 
           <FormField
             control={form.control}
+            name="startDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Start Date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} value={field.value || ""} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="endDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>End Date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} value={field.value || ""} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="dateRange"
             render={({ field }) => (
               <FormItem>
@@ -123,6 +190,9 @@ export function CalendarForm({ initialData }: CalendarFormProps) {
                 <FormControl>
                   <Input placeholder="e.g., 27 FEB - 01 MAR" {...field} value={field.value || ""} />
                 </FormControl>
+                <FormDescription>
+                  Automatically generated from Start Date and End Date.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

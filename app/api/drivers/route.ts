@@ -46,6 +46,7 @@ export async function GET(request: Request) {
         playerType: drivers.playerType,
         racingCategory: drivers.racingCategory,
         currentTeam: drivers.currentTeam,
+        teamId: drivers.teamId,
         teamColor: drivers.teamColor,
         accessibleColor: drivers.accessibleColor,
         number: drivers.number,

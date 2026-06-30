@@ -471,8 +471,21 @@ export const calendarEvents = mysqlTable("calendar_events", {
   series: varchar("series", { length: 50 }).notNull(), // "MotoGP", "F1", etc
   logoUrl: text("logo_url"),
   tabType: varchar("tab_type", { length: 20 }).notNull().default("INTL"), // "LK", "INTL"
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
 });
 
 export type CalendarEvent = typeof calendarEvents.$inferSelect;
+
+// POLICIES TABLE
+export const policies = mysqlTable("policies", {
+  id: varchar("id", { length: 191 }).primaryKey(), // 'cookie-policy', 'privacy-policy', 'legal-notice', 'purchase-policy', 'terms-and-conditions'
+  title: varchar("title", { length: 255 }).notNull(),
+  content: longtext("content").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().onUpdateNow().defaultNow(),
+});
+
+export type Policy = typeof policies.$inferSelect;

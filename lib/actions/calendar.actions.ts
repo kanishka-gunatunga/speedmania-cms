@@ -15,7 +15,11 @@ export async function getCalendarEvents(tabType?: string) {
     const events = await db.select()
       .from(calendarEvents)
       .where(filters.length > 0 ? filters[0] : undefined) // Assuming tabType is the only filter for now
-      .orderBy(desc(calendarEvents.createdAt));
+      .orderBy(
+        sql`CASE WHEN ${calendarEvents.startDate} IS NULL THEN 1 ELSE 0 END`,
+        calendarEvents.startDate,
+        desc(calendarEvents.createdAt)
+      );
       
     return events;
   } catch (error) {
@@ -78,6 +82,9 @@ export async function createCalendarEvent(data: {
   subtitle: string;
   series: string;
   tabType: string;
+  logoUrl?: string | null;
+  startDate?: Date | null;
+  endDate?: Date | null;
 }) {
   try {
     await db.insert(calendarEvents).values(data);
@@ -98,6 +105,9 @@ export async function updateCalendarEvent(id: string, data: {
   subtitle: string;
   series: string;
   tabType: string;
+  logoUrl?: string | null;
+  startDate?: Date | null;
+  endDate?: Date | null;
 }) {
   try {
     await db.update(calendarEvents)
