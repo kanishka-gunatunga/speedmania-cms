@@ -102,6 +102,11 @@ const NAV_ITEMS = [
     icon: User,
   },
   {
+    label: "Policies",
+    href: "/admin/policies",
+    icon: FileText,
+  },
+  {
     label: "SEO Settings",
     href: "/admin/seo",
     icon: Search,
